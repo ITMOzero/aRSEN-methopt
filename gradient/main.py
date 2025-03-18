@@ -10,6 +10,7 @@ class GradientDescent:
         CONSTANT = 1
         DESCENDING = 2
         OPTIMAL = 3
+        DICHOTOMY = 4
 
     def __init__(self, mode: Method) -> None:
         self.mode = mode
@@ -114,6 +115,51 @@ class GradientDescent:
             d = a + phi * (b - a)
         return (a + b) / 2
 
+    def _dichotomy(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
+        np.array, int]:
+        """
+        Градиентный спуск с поиском оптимального шага по методу дихотомии.
+        :param f: функция
+        :param grad: функция градиента
+        :param x: начальная точка
+        :param iters: максимальное число итераций
+        :param eps: точность
+        :return: точка минимума и число итераций
+        """
+        i = 0
+        x = np.array(x, dtype=float)
+        for i in range(iters):
+            gradient = np.array(grad(*x))
+            alpha = self._dichotomy_search(lambda a: f(*(x - a * gradient)), 0, 1, eps=eps)
+            tmp = x - alpha * gradient
+            if np.linalg.norm(tmp - x) < eps:
+                break
+            x = tmp
+        return x, i + 1
+
+    def _dichotomy_search(self, f: tp.Any, a: float, b: float, eps: float = 1e-6, delta: float = None) -> float:
+        """
+        Поиск минимума функции f на интервале [a, b] с помощью метода дихотомии.
+        :param f: функция одной переменной.
+        :param a: начало интервала
+        :param b: конец интервала
+        :param eps: требуемая точность
+        :param delta: небольшое число для разбиения интервала (если не задано, берётся eps/2)
+        :return: приближённое значение аргумента минимума
+        """
+        if delta is None:
+            delta = eps / 2
+        while (b - a) > eps:
+            mid = (a + b) / 2
+            c = mid - delta
+            d = mid + delta
+            if f(c) < f(d):
+                b = d
+            else:
+                a = c
+        return (a + b) / 2
+
+
     def find_min(self, f: tp.Any, vars: tp.Any, x: np.array, rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
             tuple[np.array, int]:
@@ -143,12 +189,20 @@ class GradientDescent:
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
     f = (x + 124) ** 2 + (y + 410) ** 2 + (z + 4) * (z - 4)
+
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
     optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
+    dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
+
     print('constant rate:')
     print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0], iters=10000))
+
     print('descending rate:')
     print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+
     print('optimal rate:')
     print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+
+    print('Optimal rate (dichotomy):')
+    print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
