@@ -48,8 +48,7 @@ class GradientDescent:
         return x, i + 1
 
     def _descending(self, f: tp.Any, grad: tp.Any, x: np.array, rate: float = 1.0, ratio: float = 0.5,
-                    iters: int = 1000,
-                    eps: float = 1e-6) -> tuple[np.array, int]:
+                    iters: int = 1000, eps: float = 1e-6) -> tuple[np.array, int]:
         """
         Градиентный спуск с дроблением шага.
         :param f: исходная функция
@@ -65,13 +64,20 @@ class GradientDescent:
         x = np.array(x, dtype=float)
         for i in range(iters):
             gradient = np.array(grad(*x))
-            # FIXME: infinite loop
+
+            norm_gradient = np.linalg.norm(gradient)
+            if norm_gradient != 0:
+                gradient = gradient / norm_gradient
+
             while f(*(x - rate * gradient)) > f(*x) - 0.5 * rate * np.linalg.norm(gradient) ** 2:
                 rate *= ratio
-                tmp = x - rate * gradient
-                if np.linalg.norm(tmp - x) < eps:
-                    break
-                x = tmp
+            tmp = x - rate * gradient
+            if np.linalg.norm(tmp - x) < eps:
+                break
+            x = tmp
+
+            rate = rate / (1 + i)
+
         return x, i + 1
 
     def _optimal(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
@@ -115,6 +121,7 @@ class GradientDescent:
                 a = c
             c = b - phi * (b - a)
             d = a + phi * (b - a)
+
         return (a + b) / 2
 
     def _dichotomy(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
@@ -205,8 +212,8 @@ if __name__ == '__main__':
     print('Constant rate:')
     print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
-    # print('Descending rate:')
-    # print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    print('Descending rate:')
+    print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
     print('Optimal rate (gold ratio):')
     print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0], eps=1e-3))
