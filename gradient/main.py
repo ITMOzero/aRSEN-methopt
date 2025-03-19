@@ -139,27 +139,28 @@ class GradientDescent:
             x = tmp
         return x, i + 1
 
-    def _dichotomy_search(self, f: tp.Any, a: float, b: float, eps: float = 1e-6, delta: float = None) -> float:
+    def _dichotomy_search(self, f: tp.Any, a: float, b: float, eps: float = 1e-6) -> float:
         """
         Поиск минимума функции f на интервале [a, b] с помощью метода дихотомии.
         :param f: функция одной переменной.
         :param a: начало интервала
         :param b: конец интервала
         :param eps: требуемая точность
-        :param delta: небольшое число для разбиения интервала (если не задано, берётся eps/2)
         :return: приближённое значение аргумента минимума
         """
-        if delta is None:
-            delta = eps / 2
-        #     FIXME: infinite loop
         while (b - a) > eps:
-            mid = (a + b) / 2
-            c = mid - delta
-            d = mid + delta
-            if f(c) < f(d):
-                b = d
-            else:
+            c = (a + b) / 2
+            left = (a + c) / 2
+            right = (c + b) / 2
+
+            if f(left) < f(c):
+                b = c
+            elif f(right) < f(c):
                 a = c
+            else:
+                a = left
+                b = right
+
         return (a + b) / 2
 
     def find_min(self, f: tp.Any, vars: tp.Any, x: np.array, rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
@@ -192,7 +193,7 @@ class GradientDescent:
 
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
-    f = (x ** 2) * 2 + 3 * (y ** 2) + (z** 2)/2
+    f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
@@ -210,5 +211,5 @@ if __name__ == '__main__':
     print('Optimal rate (gold ratio):')
     print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0], eps=1e-3))
 
-    # print('Optimal rate (dichotomy):')
-    # print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    print('Optimal rate (dichotomy):')
+    print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
