@@ -216,7 +216,7 @@ if __name__ == '__main__':
     print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
     print('Optimal rate (gold ratio):')
-    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0], eps=1e-3))
+    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
     print('Optimal rate (dichotomy):')
     print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
