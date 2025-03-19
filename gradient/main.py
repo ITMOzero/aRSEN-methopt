@@ -1,3 +1,4 @@
+import math
 import typing as tp
 from enum import Enum
 
@@ -64,12 +65,13 @@ class GradientDescent:
         x = np.array(x, dtype=float)
         for i in range(iters):
             gradient = np.array(grad(*x))
+            # FIXME: infinite loop
             while f(*(x - rate * gradient)) > f(*x) - 0.5 * rate * np.linalg.norm(gradient) ** 2:
                 rate *= ratio
-            tmp = x - rate * gradient
-            if np.linalg.norm(tmp - x) < eps:
-                break
-            x = tmp
+                tmp = x - rate * gradient
+                if np.linalg.norm(tmp - x) < eps:
+                    break
+                x = tmp
         return x, i + 1
 
     def _optimal(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
@@ -149,6 +151,7 @@ class GradientDescent:
         """
         if delta is None:
             delta = eps / 2
+        #     FIXME: infinite loop
         while (b - a) > eps:
             mid = (a + b) / 2
             c = mid - delta
@@ -158,7 +161,6 @@ class GradientDescent:
             else:
                 a = c
         return (a + b) / 2
-
 
     def find_min(self, f: tp.Any, vars: tp.Any, x: np.array, rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
@@ -182,27 +184,31 @@ class GradientDescent:
             return self._descending(f_lambdified, grad, x, rate, ratio, iters, eps)
         elif self.mode == self.Method.OPTIMAL:
             return self._optimal(f_lambdified, grad, x, iters, eps)
+        elif self.mode == self.Method.DICHOTOMY:
+            return self._dichotomy(f_lambdified, grad, x, iters, eps)
         else:
             raise NotImplementedError
 
 
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
-    f = (x + 124) ** 2 + (y + 410) ** 2 + (z + 4) * (z - 4)
+    f = (x ** 2) * 2 + 3 * (y ** 2) + (z** 2)/2
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
     optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
 
-    print('constant rate:')
-    print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0], iters=10000))
 
-    print('descending rate:')
-    print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    # TODO: is it correct?
+    print('Constant rate:')
+    print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
-    print('optimal rate:')
-    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    # print('Descending rate:')
+    # print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
-    print('Optimal rate (dichotomy):')
-    print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    print('Optimal rate (gold ratio):')
+    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0], eps=1e-3))
+
+    # print('Optimal rate (dichotomy):')
+    # print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
