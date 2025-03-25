@@ -44,10 +44,6 @@ class GradientDescent:
 
             gradient = np.array(grad(*point))
 
-            norm_gradient = np.linalg.norm(gradient)
-            if norm_gradient != 0:
-                gradient = gradient / norm_gradient
-
             tmp = point - learning_rate * gradient
 
             trajectory.append(tmp.copy())
@@ -72,10 +68,6 @@ class GradientDescent:
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
-
-            norm_gradient = np.linalg.norm(gradient)
-            if norm_gradient != 0:
-                gradient = gradient / norm_gradient
 
             while f(*(point - learning_rate * gradient)) > f(*point) - 0.5 * learning_rate * np.linalg.norm(gradient) ** 2:
                 learning_rate *= ratio
@@ -199,9 +191,9 @@ class GradientDescent:
         f_lambdified = sp.lambdify(vars, f, 'numpy')
 
         if self.mode == self.Method.CONSTANT:
-            return self._constant(grad, starting_point, learning_rate, iters, eps)
+            return self._constant(grad, starting_point, 0.3, iters, eps)
         elif self.mode == self.Method.DESCENDING:
-            return self._descending(f_lambdified, grad, starting_point, learning_rate, ratio, iters, eps)
+            return self._descending(f_lambdified, grad, starting_point, 0.1, ratio, iters, eps)
         elif self.mode == self.Method.OPTIMAL:
             return self._optimal(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
