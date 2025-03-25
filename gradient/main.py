@@ -27,87 +27,81 @@ class GradientDescent:
         gradient = [sp.diff(f, var) for var in vars]
         return sp.lambdify(vars, gradient, 'numpy')
 
-    def _constant(self, grad: tp.Any, x: np.array, rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
+    def _constant(self, grad: tp.Any, point: np.array, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.array, int, np.array]:
         """
         Градиентный спуск с постоянным шагом.
         :param grad: градиент
-        :param x: начальная точка
-        :param rate: шаг
+        :param point: начальная точка
+        :param learning_rate: шаг
         :param iters: максимальное число итераций
         :param eps: точность
         :return: точка минимума и число итераций
         """
-        i = 0
-        x = np.array(x, dtype=float)
-        trajectory = [x.copy()]
+        trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*x))
-            tmp = x - rate * gradient
+            gradient = np.array(grad(*point))
+            tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - x) < eps:
+            if np.linalg.norm(tmp - point) < eps:
                 break
-            x = tmp
-        return x, i + 1, np.array(trajectory)
+            point = tmp
+        return point, i + 1, np.array(trajectory)
 
-    def _descending(self, f: tp.Any, grad: tp.Any, x: np.array, rate: float = 1.0, ratio: float = 0.5,
+    def _descending(self, f: tp.Any, grad: tp.Any, point: np.array, learning_rate: float = 1.0, ratio: float = 0.5,
                     iters: int = 1000, eps: float = 1e-6) -> tuple[np.array, int, np.array]:
         """
         Градиентный спуск с дроблением шага.
         :param f: исходная функция
         :param grad: градиент
-        :param x: начальная точка
-        :param rate: начальный шаг
+        :param point: начальная точка
+        :param learning_rate: начальный шаг
         :param ratio: коэффициент дробления шага
         :param iters: максимальное число итераций
         :param eps: точность
         :return: точка минимума и число итераций
         """
-        i = 0
-        x = np.array(x, dtype=float)
-        trajectory = [x.copy()]
+        trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*x))
+            gradient = np.array(grad(*point))
 
             norm_gradient = np.linalg.norm(gradient)
             if norm_gradient != 0:
                 gradient = gradient / norm_gradient
 
-            while f(*(x - rate * gradient)) > f(*x) - 0.5 * rate * np.linalg.norm(gradient) ** 2:
-                rate *= ratio
-            tmp = x - rate * gradient
+            while f(*(point - learning_rate * gradient)) > f(*point) - 0.5 * learning_rate * np.linalg.norm(gradient) ** 2:
+                learning_rate *= ratio
+            tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - x) < eps:
+            if np.linalg.norm(tmp - point) < eps:
                 break
-            x = tmp
+            point = tmp
 
-            rate = rate / (1 + i)
+            learning_rate = learning_rate / (1 + i)
 
-        return x, i + 1, np.array(trajectory)
+        return point, i + 1, np.array(trajectory)
 
-    def _optimal(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
+    def _optimal(self, f: tp.Any, grad: tp.Any, point: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.array, int, np.array]:
         """
         Градиентный спуск с поиском оптимального шага.
         :param f: функция
         :param grad: функция градиента
-        :param x: начальная точка
+        :param point: начальная точка
         :param iters: максимальное число итераций
         :param eps: точность
         :return: точка минимума и число итераций
         """
-        i = 0
-        x = np.array(x, dtype=float)
-        trajectory = [x.copy()]
+        trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*x))
-            alpha = self._golden_ratio_search(lambda a: f(*(x - a * gradient)), 0, 1)
-            tmp = x - alpha * gradient
+            gradient = np.array(grad(*point))
+            alpha = self._golden_ratio_search(lambda a: f(*(point - a * gradient)), 0, 1)
+            tmp = point - alpha * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - x) < eps:
+            if np.linalg.norm(tmp - point) < eps:
                 break
-            x = tmp
-        return x, i + 1, np.array(trajectory)
+            point = tmp
+        return point, i + 1, np.array(trajectory)
 
     def _golden_ratio_search(self, f: tp.Any, a: float, b: float, eps: float = 1e-6) -> float:
         """
@@ -131,7 +125,7 @@ class GradientDescent:
 
         return (a + b) / 2
 
-    def _dichotomy(self, f: tp.Any, grad: tp.Any, x: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
+    def _dichotomy(self, f: tp.Any, grad: tp.Any, point: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.array, int,np.array]:
         """
         Градиентный спуск с поиском оптимального шага по методу дихотомии.
@@ -142,18 +136,16 @@ class GradientDescent:
         :param eps: точность
         :return: точка минимума и число итераций
         """
-        i = 0
-        x = np.array(x, dtype=float)
-        trajectory = [x.copy()]
+        trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*x))
-            alpha = self._dichotomy_search(lambda a: f(*(x - a * gradient)), 0, 1, eps=eps)
-            tmp = x - alpha * gradient
+            gradient = np.array(grad(*point))
+            alpha = self._dichotomy_search(lambda a: f(*(point - a * gradient)), 0, 1, eps=eps)
+            tmp = point - alpha * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - x) < eps:
+            if np.linalg.norm(tmp - point) < eps:
                 break
-            x = tmp
-        return x, i + 1, np.array(trajectory)
+            point = tmp
+        return point, i + 1, np.array(trajectory)
 
     def _dichotomy_search(self, f: tp.Any, a: float, b: float, eps: float = 1e-6) -> float:
         """
@@ -179,7 +171,7 @@ class GradientDescent:
 
         return (a + b) / 2
 
-    def find_min(self, f: tp.Any, vars: tp.Any, x: np.array, rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
+    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.array, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
             tuple[np.array, int, np.array]:
         """
@@ -187,22 +179,25 @@ class GradientDescent:
         :param f: функция
         :param vars: переменные
         :param x: начальная точка
-        :param rate: начальный шаг
+        :param learning_rate: начальный шаг
         :param ratio: коэффициент дробления
         :param iters: максимальное число итераций
         :param eps: точность
         :return:
         """
+
+        starting_point = np.array(starting_point, dtype=float)
         grad = self._get_gradient(f, vars)
         f_lambdified = sp.lambdify(vars, f, 'numpy')
+
         if self.mode == self.Method.CONSTANT:
-            return self._constant(grad, x, rate, iters, eps)
+            return self._constant(grad, starting_point, learning_rate, iters, eps)
         elif self.mode == self.Method.DESCENDING:
-            return self._descending(f_lambdified, grad, x, rate, ratio, iters, eps)
+            return self._descending(f_lambdified, grad, starting_point, learning_rate, ratio, iters, eps)
         elif self.mode == self.Method.OPTIMAL:
-            return self._optimal(f_lambdified, grad, x, iters, eps)
+            return self._optimal(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
-            return self._dichotomy(f_lambdified, grad, x, iters, eps)
+            return self._dichotomy(f_lambdified, grad, starting_point, iters, eps)
         else:
             raise NotImplementedError
 
@@ -216,10 +211,10 @@ def plot_3d(f, trajectory_constant, trajectory_descending, trajectory_optimal, t
 
 
 
-    # ax.plot(trajectory_constant[:, 0], trajectory_constant[:, 1], f(trajectory_constant[:, 0], trajectory_constant[:, 1]), 'r-', label='Constant rate')
-    ax.plot(trajectory_descending[:, 0], trajectory_descending[:, 1], f(trajectory_descending[:, 0], trajectory_descending[:, 1]), 'g-', label='Descending rate')
-    ax.plot(trajectory_optimal[:, 0], trajectory_optimal[:, 1], f(trajectory_optimal[:, 0], trajectory_optimal[:, 1]), 'b-', label='Optimal rate (gold ratio)')
-    ax.plot(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1], f(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1]), 'y-', label='Optimal rate (dichotomy)')
+    # ax.plot(trajectory_constant[:, 0], trajectory_constant[:, 1], f(trajectory_constant[:, 0], trajectory_constant[:, 1]), 'r-', label='Constant learning_rate')
+    ax.plot(trajectory_descending[:, 0], trajectory_descending[:, 1], f(trajectory_descending[:, 0], trajectory_descending[:, 1]), 'g-', label='Descending learning_rate')
+    ax.plot(trajectory_optimal[:, 0], trajectory_optimal[:, 1], f(trajectory_optimal[:, 0], trajectory_optimal[:, 1]), 'b-', label='Optimal learning_rate (gold ratio)')
+    ax.plot(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1], f(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1]), 'y-', label='Optimal learning_rate (dichotomy)')
 
     ax.set_xlabel(vars[0])
     ax.set_ylabel(vars[1])
@@ -236,30 +231,8 @@ def plot_3d(f, trajectory_constant, trajectory_descending, trajectory_optimal, t
 
 
 if __name__ == '__main__':
-    # x, y, z = sp.symbols('x y z')
-    # f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
-    #
-    # constant = GradientDescent(GradientDescent.Method.CONSTANT)
-    # descending = GradientDescent(GradientDescent.Method.DESCENDING)
-    # optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
-    # dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
-    #
-    #
-    # # TODO: is it correct?
-    # print('Constant rate:')
-    # print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
-    #
-    # print('Descending rate:')
-    # print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
-    #
-    # print('Optimal rate (gold ratio):')
-    # print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
-    #
-    # print('Optimal rate (dichotomy):')
-    # print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
-
-    x, y = sp.symbols('x y')
-    f = (x ** 2) * 2 + 3 * (y ** 2)  # Example function
+    x, y, z = sp.symbols('x y z')
+    f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
@@ -267,14 +240,36 @@ if __name__ == '__main__':
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
 
 
-    _, _, trajectory_constant = constant.find_min(f, [x, y], [10.0, 10.0])
-    _, _, trajectory_descending = descending.find_min(f, [x, y], [10.0, 10.0])
-    _, _, trajectory_optimal = optimal.find_min(f, [x, y], [10.0, 10.0])
-    _, _, trajectory_dichotomy = dichotomy.find_min(f, [x, y], [10.0, 10.0])
+    # TODO: is it correct?
+    print('Constant learning_rate:')
+    print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
-    xlim = (-10, 10)
-    ylim = (-10, 10)
+    print('Descending learning_rate:')
+    print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
 
-    plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectory_constant, trajectory_descending, trajectory_optimal,
-            trajectory_dichotomy, [x, y], xlim, ylim)
+    print('Optimal learning_rate (gold ratio):')
+    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+
+    print('Optimal learning_rate (dichotomy):')
+    print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+
+    # x, y = sp.symbols('x y')
+    # f = (x ** 2) * 2 + 3 * (y ** 2)  # Example function
+    #
+    # constant = GradientDescent(GradientDescent.Method.CONSTANT)
+    # descending = GradientDescent(GradientDescent.Method.DESCENDING)
+    # optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
+    # dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
+    #
+    #
+    # _, _, trajectory_constant = constant.find_min(f, [x, y], [10.0, 10.0])
+    # _, _, trajectory_descending = descending.find_min(f, [x, y], [10.0, 10.0])
+    # _, _, trajectory_optimal = optimal.find_min(f, [x, y], [10.0, 10.0])
+    # _, _, trajectory_dichotomy = dichotomy.find_min(f, [x, y], [10.0, 10.0])
+    #
+    # xlim = (-10, 10)
+    # ylim = (-10, 10)
+    #
+    # plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectory_constant, trajectory_descending, trajectory_optimal,
+    #         trajectory_dichotomy, [x, y], xlim, ylim)
 
