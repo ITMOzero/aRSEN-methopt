@@ -1,10 +1,8 @@
-import math
 import typing as tp
 from enum import Enum
 
 import numpy as np
 import sympy as sp
-from typing import Callable
 
 
 class GradientDescent:
@@ -17,7 +15,7 @@ class GradientDescent:
     def __init__(self, mode: Method) -> None:
         self.mode = mode
 
-    def _get_gradient(self, f: Callable[[np.ndarray], float], vars: list[sp.Symbol]) -> tp.Any:
+    def _get_gradient(self, f: tp.Any, vars: tp.Any) -> tp.Any:
         """
         Вычисляет градиент функции f по переменным variables.
         :param f: исходная функция
@@ -27,7 +25,7 @@ class GradientDescent:
         gradient = [sp.diff(f, var) for var in vars]
         return sp.lambdify(vars, gradient, 'numpy')
 
-    def _constant(self, grad: Callable[[np.ndarray], np.ndarray], point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
+    def _constant(self, grad: tp.Any, point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с постоянным шагом.
@@ -38,12 +36,12 @@ class GradientDescent:
         :param eps: точность
         :return: точка минимума и число итераций
         """
+        i = 0
         trajectory = [point.copy()]
         for i in range(iters):
 
 
             gradient = np.array(grad(*point))
-
             tmp = point - learning_rate * gradient
 
             trajectory.append(tmp.copy())
@@ -65,6 +63,7 @@ class GradientDescent:
         :param eps: точность
         :return: точка минимума и число итераций
         """
+        i = 0
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
@@ -92,6 +91,7 @@ class GradientDescent:
         :param eps: точность
         :return: точка минимума и число итераций
         """
+        i = 0
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
@@ -112,6 +112,7 @@ class GradientDescent:
         :param eps: точность
         :return: точка минимума
         """
+
         phi = (np.sqrt(5) - 1) / 2
         c = b - phi * (b - a)
         d = a + phi * (b - a)
@@ -131,11 +132,12 @@ class GradientDescent:
         Градиентный спуск с поиском оптимального шага по методу дихотомии.
         :param f: функция
         :param grad: функция градиента
-        :param x: начальная точка
+        :param point: начальная точка
         :param iters: максимальное число итераций
         :param eps: точность
         :return: точка минимума и число итераций
         """
+        i = 0
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
@@ -171,14 +173,14 @@ class GradientDescent:
 
         return (a + b) / 2
 
-    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
+    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.1, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
             tuple[np.ndarray, int, np.ndarray]:
         """
         Поиск минимума функции
         :param f: функция
         :param vars: переменные
-        :param x: начальная точка
+        :param starting_point: начальная точка
         :param learning_rate: начальный шаг
         :param ratio: коэффициент дробления
         :param iters: максимальное число итераций
@@ -191,9 +193,9 @@ class GradientDescent:
         f_lambdified = sp.lambdify(vars, f, 'numpy')
 
         if self.mode == self.Method.CONSTANT:
-            return self._constant(grad, starting_point, 0.3, iters, eps)
+            return self._constant(grad, starting_point, learning_rate, iters, eps)
         elif self.mode == self.Method.DESCENDING:
-            return self._descending(f_lambdified, grad, starting_point, 0.1, ratio, iters, eps)
+            return self._descending(f_lambdified, grad, starting_point, learning_rate, ratio, iters, eps)
         elif self.mode == self.Method.OPTIMAL:
             return self._optimal(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
@@ -213,23 +215,17 @@ if __name__ == '__main__':
     optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
 
+    for method_name, method in [
+        ('Constant learning_rate', constant),
+        ('Descending learning_rate', descending),
+        ('Optimal learning_rate (gold ratio)', optimal),
+        ('Optimal learning_rate (dichotomy)', dichotomy)
+    ]:
+        print(f'{method_name}:')
+        point, step, _ = method.find_min(f, [x, y, z], np.array([10.0, 10.0, 10.0]))
 
-    # TODO: is it correct?
-    print('Constant learning_rate:')
-    point, step, _ = constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
-    print(point, step)
-
-    print('Descending learning_rate:')
-    point, step, _ = descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
-    print(point, step)
-
-    print('Optimal learning_rate (gold ratio):')
-    point, step, _ = optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
-    print(point, step)
-
-    print('Optimal learning_rate (dichotomy):')
-    point, step, _ = dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
-    print(point, step)
+        point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
+        print(point_formatted, step, "\n")
 
     # x, y = sp.symbols('x y')
     # f = (x ** 2) * 2 + 3 * (y ** 2)  # Example function
