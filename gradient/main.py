@@ -4,7 +4,7 @@ from enum import Enum
 
 import numpy as np
 import sympy as sp
-from matplotlib import pyplot as plt
+from typing import Callable
 
 
 class GradientDescent:
@@ -17,7 +17,7 @@ class GradientDescent:
     def __init__(self, mode: Method) -> None:
         self.mode = mode
 
-    def _get_gradient(self, f: tp.Any, vars: tp.Any) -> tp.Any:
+    def _get_gradient(self, f: Callable[[np.ndarray], float], vars: list[sp.Symbol]) -> tp.Any:
         """
         Вычисляет градиент функции f по переменным variables.
         :param f: исходная функция
@@ -27,8 +27,8 @@ class GradientDescent:
         gradient = [sp.diff(f, var) for var in vars]
         return sp.lambdify(vars, gradient, 'numpy')
 
-    def _constant(self, grad: tp.Any, point: np.array, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
-        np.array, int, np.array]:
+    def _constant(self, grad: Callable[[np.ndarray], np.ndarray], point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
+        np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с постоянным шагом.
         :param grad: градиент
@@ -40,16 +40,24 @@ class GradientDescent:
         """
         trajectory = [point.copy()]
         for i in range(iters):
+
+
             gradient = np.array(grad(*point))
+
+            norm_gradient = np.linalg.norm(gradient)
+            if norm_gradient != 0:
+                gradient = gradient / norm_gradient
+
             tmp = point - learning_rate * gradient
+
             trajectory.append(tmp.copy())
             if np.linalg.norm(tmp - point) < eps:
                 break
             point = tmp
         return point, i + 1, np.array(trajectory)
 
-    def _descending(self, f: tp.Any, grad: tp.Any, point: np.array, learning_rate: float = 1.0, ratio: float = 0.5,
-                    iters: int = 1000, eps: float = 1e-6) -> tuple[np.array, int, np.array]:
+    def _descending(self, f: tp.Any, grad: tp.Any, point: np.ndarray, learning_rate: float = 1.0, ratio: float = 0.5,
+                    iters: int = 1000, eps: float = 1e-6) -> tuple[np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с дроблением шага.
         :param f: исходная функция
@@ -81,8 +89,8 @@ class GradientDescent:
 
         return point, i + 1, np.array(trajectory)
 
-    def _optimal(self, f: tp.Any, grad: tp.Any, point: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
-        np.array, int, np.array]:
+    def _optimal(self, f: tp.Any, grad: tp.Any, point: np.ndarray, iters: int = 1000, eps: float = 1e-6) -> tuple[
+        np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с поиском оптимального шага.
         :param f: функция
@@ -125,8 +133,8 @@ class GradientDescent:
 
         return (a + b) / 2
 
-    def _dichotomy(self, f: tp.Any, grad: tp.Any, point: np.array, iters: int = 1000, eps: float = 1e-6) -> tuple[
-        np.array, int,np.array]:
+    def _dichotomy(self, f: tp.Any, grad: tp.Any, point: np.ndarray, iters: int = 1000, eps: float = 1e-6) -> tuple[
+        np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с поиском оптимального шага по методу дихотомии.
         :param f: функция
@@ -171,9 +179,9 @@ class GradientDescent:
 
         return (a + b) / 2
 
-    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.array, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
+    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
-            tuple[np.array, int, np.array]:
+            tuple[np.ndarray, int, np.ndarray]:
         """
         Поиск минимума функции
         :param f: функция
@@ -203,32 +211,6 @@ class GradientDescent:
 
 
 
-def plot_3d(f, trajectory_constant, trajectory_descending, trajectory_optimal, trajectory_dichotomy, vars, xlim, ylim):
-    plt.figure(figsize=(10, 8))
-
-
-    ax = plt.axes(projection='3d')
-
-
-
-    # ax.plot(trajectory_constant[:, 0], trajectory_constant[:, 1], f(trajectory_constant[:, 0], trajectory_constant[:, 1]), 'r-', label='Constant learning_rate')
-    ax.plot(trajectory_descending[:, 0], trajectory_descending[:, 1], f(trajectory_descending[:, 0], trajectory_descending[:, 1]), 'g-', label='Descending learning_rate')
-    ax.plot(trajectory_optimal[:, 0], trajectory_optimal[:, 1], f(trajectory_optimal[:, 0], trajectory_optimal[:, 1]), 'b-', label='Optimal learning_rate (gold ratio)')
-    ax.plot(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1], f(trajectory_dichotomy[:, 0], trajectory_dichotomy[:, 1]), 'y-', label='Optimal learning_rate (dichotomy)')
-
-    ax.set_xlabel(vars[0])
-    ax.set_ylabel(vars[1])
-    ax.set_zlabel('f(x, y)')
-
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-
-    ax.legend()
-
-    plt.savefig('gradient_descent_3d_plot.png')
-
-
-
 
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
@@ -242,20 +224,24 @@ if __name__ == '__main__':
 
     # TODO: is it correct?
     print('Constant learning_rate:')
-    print(constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    point, step, _ = constant.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
+    print(point, step)
 
     print('Descending learning_rate:')
-    print(descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    point, step, _ = descending.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
+    print(point, step)
 
     print('Optimal learning_rate (gold ratio):')
-    print(optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    point, step, _ = optimal.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
+    print(point, step)
 
     print('Optimal learning_rate (dichotomy):')
-    print(dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0]))
+    point, step, _ = dichotomy.find_min(f, [x, y, z], [10.0, 10.0, 10.0])
+    print(point, step)
 
     # x, y = sp.symbols('x y')
     # f = (x ** 2) * 2 + 3 * (y ** 2)  # Example function
-    #
+
     # constant = GradientDescent(GradientDescent.Method.CONSTANT)
     # descending = GradientDescent(GradientDescent.Method.DESCENDING)
     # optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
