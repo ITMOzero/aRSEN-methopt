@@ -3,6 +3,7 @@ from enum import Enum
 
 import numpy as np
 import sympy as sp
+from matplotlib import pyplot as plt, colors
 
 
 class GradientDescent:
@@ -66,18 +67,23 @@ class GradientDescent:
         """
         i = 0
         trajectory = [point.copy()]
+        initial_learning_rate = learning_rate
+
         for i in range(iters):
             gradient = np.array(grad(*point))
+            learning_rate = initial_learning_rate
 
             while f(*(point - learning_rate * gradient)) > f(*point) - 0.5 * learning_rate * np.linalg.norm(gradient) ** 2:
                 learning_rate *= ratio
+                if learning_rate < 1e-10:
+                    break
+
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
+
             if np.linalg.norm(tmp - point) < eps:
                 break
             point = tmp
-
-            learning_rate = learning_rate / (1 + i)
 
         return point, i + 1, np.array(trajectory)
 
@@ -239,6 +245,10 @@ class GradientDescent:
 
 
 
+
+
+
+
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
     f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
@@ -248,6 +258,8 @@ if __name__ == '__main__':
     optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
     adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
+
+
 
     for method_name, method in [
         ('Constant learning_rate', constant),
@@ -262,23 +274,4 @@ if __name__ == '__main__':
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
 
-    # x, y = sp.symbols('x y')
-    # f = (x ** 2) * 2 + 3 * (y ** 2)  # Example function
-
-    # constant = GradientDescent(GradientDescent.Method.CONSTANT)
-    # descending = GradientDescent(GradientDescent.Method.DESCENDING)
-    # optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
-    # dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
-    #
-    #
-    # _, _, trajectory_constant = constant.find_min(f, [x, y], [10.0, 10.0])
-    # _, _, trajectory_descending = descending.find_min(f, [x, y], [10.0, 10.0])
-    # _, _, trajectory_optimal = optimal.find_min(f, [x, y], [10.0, 10.0])
-    # _, _, trajectory_dichotomy = dichotomy.find_min(f, [x, y], [10.0, 10.0])
-    #
-    # xlim = (-10, 10)
-    # ylim = (-10, 10)
-    #
-    # plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectory_constant, trajectory_descending, trajectory_optimal,
-    #         trajectory_dichotomy, [x, y], xlim, ylim)
 
