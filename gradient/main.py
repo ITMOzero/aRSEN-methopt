@@ -3,8 +3,7 @@ from enum import Enum
 
 import numpy as np
 import sympy as sp
-from matplotlib import pyplot as plt, colors
-
+from graphics import plot_3d
 
 class GradientDescent:
     class Method(Enum):
@@ -17,15 +16,15 @@ class GradientDescent:
     def __init__(self, mode: Method) -> None:
         self.mode = mode
 
-    def _get_gradient(self, f: tp.Any, vars: tp.Any) -> tp.Any:
+    def _get_gradient(self, f: tp.Any, variables: tp.Any) -> tp.Any:
         """
         Вычисляет градиент функции f по переменным variables.
         :param f: исходная функция
-        :param vars: список переменных
+        :param variables: список переменных
         :return: функция градиента
         """
-        gradient = [sp.diff(f, var) for var in vars]
-        return sp.lambdify(vars, gradient, 'numpy')
+        gradient = [sp.diff(f, var) for var in variables]
+        return sp.lambdify(variables, gradient, 'numpy')
 
     def _constant(self, grad: tp.Any, point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.ndarray, int, np.ndarray]:
@@ -210,13 +209,13 @@ class GradientDescent:
 
 
 
-    def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.1, ratio: float = 1.0, iters: int = 1000,
+    def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.1, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
             tuple[np.ndarray, int, np.ndarray]:
         """
         Поиск минимума функции
         :param f: функция
-        :param vars: переменные
+        :param variables: переменные
         :param starting_point: начальная точка
         :param learning_rate: начальный шаг
         :param ratio: коэффициент дробления
@@ -226,8 +225,8 @@ class GradientDescent:
         """
 
         starting_point = np.array(starting_point, dtype=float)
-        grad = self._get_gradient(f, vars)
-        f_lambdified = sp.lambdify(vars, f, 'numpy')
+        grad = self._get_gradient(f, variables)
+        f_lambdified = sp.lambdify(variables, f, 'numpy')
 
         if self.mode == self.Method.CONSTANT:
             return self._constant(grad, starting_point, learning_rate, iters, eps)
@@ -249,9 +248,14 @@ class GradientDescent:
 
 
 
+
+
+
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
-    f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
+    # f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
+
+    f = (x ** 2) * 2 + 3 * (y ** 2)
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
@@ -260,7 +264,7 @@ if __name__ == '__main__':
     adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
 
 
-
+    trajectroies = []
     for method_name, method in [
         ('Constant learning_rate', constant),
         ('Descending learning_rate', descending),
@@ -269,9 +273,27 @@ if __name__ == '__main__':
         ('Adaptive learning_rate', adaptive)
     ]:
         print(f'{method_name}:')
-        point, step, _ = method.find_min(f, [x, y, z], np.array([10.0, 10.0, 10.0]))
+        point, step, trajectroy = method.find_min(f, [x, y], np.array([10.0, 10.0]))
 
+        trajectroies.append(trajectroy)
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
+
+    xlim = (-10, 10)
+    ylim = (-10, 10)
+
+
+
+    plot_3d(
+        sp.lambdify([x, y], f, 'numpy'),
+        trajectroies[0],  # Constant
+        trajectroies[1],  # Descending
+        trajectroies[2],  # Optimal
+        trajectroies[3],  # Dichotomy
+        trajectroies[4],  # Adaptive
+        [x, y],
+        xlim,
+        ylim
+    )
 
 
