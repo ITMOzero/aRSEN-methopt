@@ -11,6 +11,7 @@ class GradientDescent:
         DESCENDING = 2
         OPTIMAL = 3
         DICHOTOMY = 4
+        ADAPTIVE = 5
 
     def __init__(self, mode: Method) -> None:
         self.mode = mode
@@ -173,6 +174,36 @@ class GradientDescent:
 
         return (a + b) / 2
 
+    def _adaptive(self, grad: tp.Any, point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
+        np.ndarray, int, np.ndarray]:
+        """
+        Градиентный спуск с адаптивным шагом.
+        :param grad: градиент
+        :param point: начальная точка
+        :param learning_rate: начальный шаг
+        :param iters: максимальное число итераций
+        :param eps: точность
+        :return: точка минимума и число итераций
+        """
+        i = 0
+        trajectory = [point.copy()]
+        prev_step = 0
+        for i in range(iters):
+            gradient = np.array(grad(*point))
+
+            step = learning_rate / (1 + prev_step)
+            prev_step = np.linalg.norm(gradient)
+
+            tmp = point - step * gradient
+            trajectory.append(tmp.copy())
+
+            if np.linalg.norm(tmp - point) < eps:
+                break
+            point = tmp
+        return point, i + 1, np.array(trajectory)
+
+
+
     def find_min(self, f: tp.Any, vars: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.1, ratio: float = 1.0, iters: int = 1000,
                  eps: float = 1e-6) -> \
             tuple[np.ndarray, int, np.ndarray]:
@@ -200,6 +231,8 @@ class GradientDescent:
             return self._optimal(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
             return self._dichotomy(f_lambdified, grad, starting_point, iters, eps)
+        elif self.mode == self.Method.ADAPTIVE:
+            return self._adaptive(grad, starting_point, learning_rate, iters, eps)
         else:
             raise NotImplementedError
 
@@ -214,12 +247,14 @@ if __name__ == '__main__':
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
     optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
+    adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
 
     for method_name, method in [
         ('Constant learning_rate', constant),
         ('Descending learning_rate', descending),
         ('Optimal learning_rate (gold ratio)', optimal),
-        ('Optimal learning_rate (dichotomy)', dichotomy)
+        ('Optimal learning_rate (dichotomy)', dichotomy),
+        ('Adaptive learning_rate', adaptive)
     ]:
         print(f'{method_name}:')
         point, step, _ = method.find_min(f, [x, y, z], np.array([10.0, 10.0, 10.0]))
