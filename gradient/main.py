@@ -41,7 +41,6 @@ class GradientDescent:
         trajectory = [point.copy()]
         for i in range(iters):
 
-
             gradient = np.array(grad(*point))
             tmp = point - learning_rate * gradient
 
@@ -242,20 +241,12 @@ class GradientDescent:
             raise NotImplementedError
 
 
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
     # f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
 
-    f = (x ** 2) * 2 + 3 * (y ** 2)
+    # f = (x ** 2) * 2 + 3 * (y ** 2)
+    f = y ** 2 + x ** 2 / 3
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
@@ -263,8 +254,8 @@ if __name__ == '__main__':
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
     adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
 
-
-    trajectroies = []
+    trajectories = []
+    labels = []
     for method_name, method in [
         ('Constant learning_rate', constant),
         ('Descending learning_rate', descending),
@@ -273,27 +264,15 @@ if __name__ == '__main__':
         ('Adaptive learning_rate', adaptive)
     ]:
         print(f'{method_name}:')
-        point, step, trajectroy = method.find_min(f, [x, y], np.array([10.0, 10.0]))
-
-        trajectroies.append(trajectroy)
+        point, step, trajectory = method.find_min(f, [x, y], np.array([10.0, 10.0]))
+        labels.append(method_name.replace(' ', '_'))
+        trajectories.append(trajectory)
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
 
     xlim = (-10, 10)
     ylim = (-10, 10)
 
-
-
-    plot_3d(
-        sp.lambdify([x, y], f, 'numpy'),
-        trajectroies[0],  # Constant
-        trajectroies[1],  # Descending
-        trajectroies[2],  # Optimal
-        trajectroies[3],  # Dichotomy
-        trajectroies[4],  # Adaptive
-        [x, y],
-        xlim,
-        ylim
-    )
+    plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectories, labels, [x, y], xlim, ylim)
 
 
