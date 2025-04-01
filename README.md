@@ -18,3 +18,6 @@
 
 - P. S. : Можно по-другому взаимодействовать между алгоритмами и графиками. Как будет удобнее.
 Ccылка на ТЗ лабы: https://docs.google.com/document/d/1zbontTSI3CzoQOAgrl6xXTbrlzjn3iqq0tF-HK7583I/edit?tab=t.0
+
+### Отчет
+https://docs.google.com/document/d/1zbontTSI3CzoQOAgrl6xXTbrlzjn3iqq0tF-HK7583I/edit?usp=sharing
