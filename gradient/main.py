@@ -231,8 +231,8 @@ class GradientDescent:
             return self._constant(grad, starting_point, learning_rate, iters, eps)
         elif self.mode == self.Method.DESCENDING:
             return self._descending(f_lambdified, grad, starting_point, learning_rate, ratio, iters, eps)
-        elif self.mode == self.Method.OPTIMAL:
-            return self._optimal(f_lambdified, grad, starting_point, iters, eps)
+        elif self.mode == self.Method.GOLDEN_RATIO:
+            return self._golden_ratio(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
             return self._dichotomy(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.ADAPTIVE:
