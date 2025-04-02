@@ -9,7 +9,7 @@ class GradientDescent:
     class Method(Enum):
         CONSTANT = 1
         DESCENDING = 2
-        OPTIMAL = 3
+        GOLDEN_RATIO = 3
         DICHOTOMY = 4
         ADAPTIVE = 5
 
@@ -85,7 +85,7 @@ class GradientDescent:
 
         return point, i + 1, np.array(trajectory)
 
-    def _optimal(self, f: tp.Any, grad: tp.Any, point: np.ndarray, iters: int = 1000, eps: float = 1e-6) -> tuple[
+    def _golden_ratio(self, f: tp.Any, grad: tp.Any, point: np.ndarray, iters: int = 1000, eps: float = 1e-6) -> tuple[
         np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с поиском оптимального шага.
@@ -100,8 +100,8 @@ class GradientDescent:
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
-            alpha = self._golden_ratio_search(lambda a: f(*(point - a * gradient)), 0, 1)
-            tmp = point - alpha * gradient
+            learning_rate = self._golden_ratio_search(lambda a: f(*(point - a * gradient)), 0, 1)
+            tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
             if np.linalg.norm(tmp - point) < eps:
                 break
@@ -146,8 +146,8 @@ class GradientDescent:
         trajectory = [point.copy()]
         for i in range(iters):
             gradient = np.array(grad(*point))
-            alpha = self._dichotomy_search(lambda a: f(*(point - a * gradient)), 0, 1, eps=eps)
-            tmp = point - alpha * gradient
+            learning_rate = self._dichotomy_search(lambda a: f(*(point - a * gradient)), 0, 1)
+            tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
             if np.linalg.norm(tmp - point) < eps:
                 break
@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
-    optimal = GradientDescent(GradientDescent.Method.OPTIMAL)
+    optimal = GradientDescent(GradientDescent.Method.GOLDEN_RATIO)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
     adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
 
