@@ -3,6 +3,8 @@ from enum import Enum
 
 import numpy as np
 import sympy as sp
+
+from graphics import animate_2d
 from graphics import plot_3d
 
 class GradientDescent:
@@ -40,8 +42,8 @@ class GradientDescent:
         i = 0
         trajectory = [point.copy()]
         for i in range(iters):
-
-            gradient = np.array(grad(*point))
+            grad0 = np.array(grad(*point))
+            gradient = grad0 / np.linalg.norm(grad0)
             tmp = point - learning_rate * gradient
 
             trajectory.append(tmp.copy())
@@ -99,7 +101,8 @@ class GradientDescent:
         i = 0
         trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*point))
+            grad0 = np.array(grad(*point))
+            gradient = grad0 / np.linalg.norm(grad0)
             learning_rate = self._golden_ratio_search(lambda a: f(*(point - a * gradient)), 0, 1)
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
@@ -145,7 +148,8 @@ class GradientDescent:
         i = 0
         trajectory = [point.copy()]
         for i in range(iters):
-            gradient = np.array(grad(*point))
+            grad0 = np.array(grad(*point))
+            gradient = grad0 / np.linalg.norm(grad0)
             learning_rate = self._dichotomy_search(lambda a: f(*(point - a * gradient)), 0, 1)
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
@@ -193,7 +197,8 @@ class GradientDescent:
         trajectory = [point.copy()]
         prev_step = 0
         for i in range(iters):
-            gradient = np.array(grad(*point))
+            grad0 = np.array(grad(*point))
+            gradient = grad0 / np.linalg.norm(grad0)
 
             step = learning_rate / (1 + prev_step)
             prev_step = np.linalg.norm(gradient)
@@ -208,7 +213,7 @@ class GradientDescent:
 
 
 
-    def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.1, ratio: float = 1.0, iters: int = 1000,
+    def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 50,
                  eps: float = 1e-6) -> \
             tuple[np.ndarray, int, np.ndarray]:
         """
@@ -241,6 +246,13 @@ class GradientDescent:
             raise NotImplementedError
 
 
+def animate(variables, f, label, method):
+    print(f'==== {label} ====')
+    res, iterations, trajectory = method.find_min(f, variables, np.array([-10.0]), learning_rate=0.2)
+    print(f'result: {res}, in {iterations} steps')
+    print('close plot window to continue')
+    animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, variables, xlim)
+
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
     # f = (x ** 2) * 2 + 3 * (y ** 2) + (z ** 2)/2
@@ -252,7 +264,6 @@ if __name__ == '__main__':
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
     optimal = GradientDescent(GradientDescent.Method.GOLDEN_RATIO)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
-    adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
 
     trajectories = []
     labels = []
@@ -261,7 +272,6 @@ if __name__ == '__main__':
         ('Descending learning_rate', descending),
         ('Optimal learning_rate (gold ratio)', optimal),
         ('Optimal learning_rate (dichotomy)', dichotomy),
-        ('Adaptive learning_rate', adaptive)
     ]:
         print(f'{method_name}:')
         point, step, trajectory = method.find_min(f, [x, y], np.array([10.0, 10.0]))
@@ -274,5 +284,11 @@ if __name__ == '__main__':
     ylim = (-10, 10)
 
     plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectories, labels, [x, y], xlim, ylim)
+    #
+    # g = x ** 2 + x / 3 - 5
+    # animate([x], g, 'constant', constant)
+    # animate([x], g, 'descending', descending)
+    # animate([x], g, 'golden ration', optimal)
+    # animate([x], g, 'dichotomy', dichotomy)
 
 

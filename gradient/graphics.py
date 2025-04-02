@@ -1,5 +1,8 @@
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 def plot_3d(f, trajectories, labels, variables, xlim, ylim):
     x = np.linspace(xlim[0], xlim[1], 50)
@@ -26,6 +29,7 @@ def plot_3d(f, trajectories, labels, variables, xlim, ylim):
         plt.savefig(f'gradient_descent_3d_plot_{label}.png')
         plt.show()
 
+
 def plot_2d(f, trajectories, labels, variables, xlim):
     x = np.linspace(xlim[0], xlim[1], 50)
     y = f(x)
@@ -47,3 +51,26 @@ def plot_2d(f, trajectories, labels, variables, xlim):
         plt.savefig(f'gradient_descent_2d_plot_{label}.png')
         plt.show()
 
+
+def animate_2d(f, trajectory, variables, xlim):
+    x_plt = np.linspace(xlim[0], xlim[1], 50)
+    y_plt = f(x_plt)
+
+    plt.ion()
+    fig, ax = plt.subplots()
+    ax.grid(True)
+    ax.plot(x_plt, y_plt)
+
+    point = ax.scatter(trajectory[0][0], f(trajectory[0][0]))
+
+    input('press to start animation')
+    for x in trajectory:
+        point.set_offsets([x[0], f(x[0])])
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(0.02)
+
+    plt.ioff()
+
+    ax.scatter(x, f(x), c='blue')
+    plt.show()
