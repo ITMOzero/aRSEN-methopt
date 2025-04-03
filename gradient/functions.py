@@ -29,6 +29,11 @@ def select_function(f_type):
         # Функция Химмельблау: f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2
         return (x ** 2 + y - 11) ** 2 + (x + y ** 2 - 7) ** 2, [x, y], [10, 10]
 
+    elif f_type == 'scipy_f1':
+
+        # Функция для анализа scipy: f(x, y) = f = y ^ 2 + x ^ 2 / 3
+        return  y ** 2 + x ** 2 / 3, [x, y], [10, 10]
+
     else:
         raise ValueError(f"Unknown function type: {f_type}")
 
