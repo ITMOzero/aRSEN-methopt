@@ -1,13 +1,9 @@
 import typing as tp
 from enum import Enum
 
-import numpy as np
-import sympy as sp
-
 from functions import *
-from graphics import animate_2d
-from graphics import plot_3d
-
+from graphics import *
+from scipy.optimize import *
 
 class GradientDescent:
     class Method(Enum):
@@ -15,6 +11,9 @@ class GradientDescent:
         DESCENDING = 2
         GOLDEN_RATIO = 3
         DICHOTOMY = 4
+        ADAPTIVE = 5
+        BFGS = 6
+        SG = 7
 
     def __init__(self, mode: Method) -> None:
         self.mode = mode
@@ -38,8 +37,9 @@ class GradientDescent:
         :param learning_rate: шаг обучения
         :return: новая точка, перемещенная по направлению градиента
         """
-        grad0 = np.array(grad(*point))
-        gradient = grad0 / np.linalg.norm(grad0)
+        gradient = np.array(grad(*point))
+        if(np.linalg.norm(gradient) != 0):
+            gradient = gradient / np.linalg.norm(gradient)
         tmp = point - learning_rate * gradient
 
         return tmp
@@ -104,8 +104,9 @@ class GradientDescent:
         :param eps: точность
         :return: новая точка, перемещенная по направлению градиента с найденным оптимальным шагом
         """
-        grad0 = np.array(grad(*point))
-        gradient = grad0 / np.linalg.norm(grad0)
+        gradient = np.array(grad(*point))
+        if (np.linalg.norm(gradient) != 0):
+            gradient = gradient / np.linalg.norm(gradient)
         a = 0
         b = 1
         while (b - a) > eps:
@@ -124,6 +125,21 @@ class GradientDescent:
         learning_rate = (a + b) / 2
         tmp = point - learning_rate * gradient
 
+        return tmp
+
+    def _adaptive(self, grad: tp.Any, point: np.ndarray, learning_rate: float) -> np.ndarray:
+        """
+        Градиентный спуск с адаптивным шагом.
+        Метод адаптирует шаг в зависимости от величины градиента.
+        :param grad: градиент
+        :param point: начальная точка
+        :param learning_rate: начальный шаг
+        :return: точка минимума и число итераций
+        """
+
+        gradient = np.array(grad(*point))
+        step = learning_rate / (1 + gradient)
+        tmp = point - step * gradient
         return tmp
 
     def _arrays_equals(self, a: np.ndarray, b: np.ndarray) -> bool:
@@ -162,29 +178,57 @@ class GradientDescent:
         grad = self._get_gradient(f, variables)
         f_lambdified = sp.lambdify(variables, f, 'numpy')
 
-        i = 0
-        trajectory = [point.copy()]
-        prev: np.ndarray = -1 * point
-        for i in range(iters):
+        if (self.mode == self.Method.BFGS or self.mode == self.Method.SG):
+            return self.scipy(f_lambdified, grad, point)
 
-            if self.mode == self.Method.CONSTANT:
-                tmp = self._constant(grad, point, learning_rate)
-            elif self.mode == self.Method.DESCENDING:
-                tmp = self._descending(grad, point,i, learning_rate, max_ratio)
-            elif self.mode == self.Method.GOLDEN_RATIO:
-                tmp = self._golden_ratio(f_lambdified, grad, point, eps)
-            elif self.mode == self.Method.DICHOTOMY:
-                tmp = self._dichotomy(f_lambdified, grad, point, eps)
-            else:
-                raise NotImplementedError
+        else:
+            i = 0
+            trajectory = [point.copy()]
+            prev: np.ndarray = -1 * point
+            for i in range(iters):
 
-            trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
-                break
-            prev = point
-            point = tmp
+                if self.mode == self.Method.CONSTANT:
+                    tmp = self._constant(grad, point, learning_rate)
+                elif self.mode == self.Method.DESCENDING:
+                    tmp = self._descending(grad, point,i, learning_rate, max_ratio)
+                elif self.mode == self.Method.GOLDEN_RATIO:
+                    tmp = self._golden_ratio(f_lambdified, grad, point, eps)
+                elif self.mode == self.Method.DICHOTOMY:
+                    tmp = self._dichotomy(f_lambdified, grad, point, eps)
+                elif self.mode == self.Method.ADAPTIVE:
+                    tmp = self._adaptive(grad, point, learning_rate)
+                else:
+                    raise NotImplementedError
 
-        return point, i + 1, np.array(trajectory)
+                trajectory.append(tmp.copy())
+                if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
+                    break
+                prev = point
+                point = tmp
+            return point, i + 1, np.array(trajectory)
+
+    def scipy(self, f: tp.Any, grad: tp.Any, starting_point: np.ndarray) -> tuple[np.ndarray, int, np.ndarray]:
+        """
+        Использование метода BFGS или SG для поиска минимума.
+        :param f: целевая функция
+        :param starting_point: начальная точка
+        :return: точка минимума, количество итераций и траектория поиска
+        """
+
+        trajectory = [starting_point.copy()]
+
+        def save_trajectory(x):
+            trajectory.append(x)
+
+        if (self.mode == self.Method.BFGS):
+            result = fmin_bfgs(lambda p: f(*p), starting_point,
+                               fprime=lambda p: grad(*p), callback=save_trajectory, disp=False, full_output=True)
+        else:
+            result = fmin_cg(lambda p: f(*p), starting_point,
+                             fprime=lambda p: grad(*p), callback=save_trajectory, disp=False, full_output=True)
+
+        return result[0], len(trajectory), np.array(trajectory)
+
 
 
 
@@ -206,12 +250,15 @@ def animate(variables, f, label, method):
 
 if __name__ == '__main__':
     x, y, z = sp.symbols('x y z')
-    f, variables, starting_point = select_function('scipy_f1')
+    f, variables, starting_point = select_function('scipy_f2')
 
     constant = GradientDescent(GradientDescent.Method.CONSTANT)
     descending = GradientDescent(GradientDescent.Method.DESCENDING)
     optimal = GradientDescent(GradientDescent.Method.GOLDEN_RATIO)
     dichotomy = GradientDescent(GradientDescent.Method.DICHOTOMY)
+    adaptive = GradientDescent(GradientDescent.Method.ADAPTIVE)
+    bfgs = GradientDescent(GradientDescent.Method.BFGS)
+    sg = GradientDescent(GradientDescent.Method.SG)
 
     trajectories = []
     labels = []
@@ -220,6 +267,9 @@ if __name__ == '__main__':
         ('Descending learning_rate', descending),
         ('Optimal learning_rate (gold ratio)', optimal),
         ('Optimal learning_rate (dichotomy)', dichotomy),
+        ('Adaptive learning_rate', adaptive),
+        ('scipy bfgs', bfgs),
+        ('scipy sg', sg)
     ]:
         print(f'{method_name}:')
         point, step, trajectory = method.find_min(f, variables, starting_point)
@@ -227,6 +277,7 @@ if __name__ == '__main__':
         trajectories.append(trajectory)
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
+
 
     xlim = (-10, 10)
     ylim = (-10, 10)
@@ -238,4 +289,8 @@ if __name__ == '__main__':
     animate([x], g, 'descending', descending)
     animate([x], g, 'golden ration', optimal)
     animate([x], g, 'dichotomy', dichotomy)
+
+
+
+
 
