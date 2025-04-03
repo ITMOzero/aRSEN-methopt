@@ -13,7 +13,6 @@ class GradientDescent:
         DESCENDING = 2
         GOLDEN_RATIO = 3
         DICHOTOMY = 4
-        ADAPTIVE = 5
 
     def __init__(self, mode: Method) -> None:
         self.mode = mode
@@ -41,48 +40,47 @@ class GradientDescent:
         """
         i = 0
         trajectory = [point.copy()]
+        prev: np.ndarray = -1 * point
         for i in range(iters):
             grad0 = np.array(grad(*point))
             gradient = grad0 / np.linalg.norm(grad0)
             tmp = point - learning_rate * gradient
 
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - point) < eps:
+            if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
                 break
+            prev = point
             point = tmp
         return point, i + 1, np.array(trajectory)
 
-    def _descending(self, f: tp.Any, grad: tp.Any, point: np.ndarray, learning_rate: float = 1.0, ratio: float = 0.5,
+    def _descending(self, grad: tp.Any, point: np.ndarray, initial_learning_rate: float = 3.0, max_ratio: int = 15,
                     iters: int = 1000, eps: float = 1e-6) -> tuple[np.ndarray, int, np.ndarray]:
         """
         Градиентный спуск с дроблением шага.
         :param f: исходная функция
         :param grad: градиент
         :param point: начальная точка
-        :param learning_rate: начальный шаг
-        :param ratio: коэффициент дробления шага
+        :param initial_learning_rate: переменная для шага в этом методе не используется
+        :param max_ratio: коэффициент дробления шага
         :param iters: максимальное число итераций
         :param eps: точность
         :return: точка минимума и число итераций
         """
         i = 0
         trajectory = [point.copy()]
-        initial_learning_rate = learning_rate
+        prev: np.ndarray = -1 * point
 
+        initial_learning_rate = 5
         for i in range(iters):
-            gradient = np.array(grad(*point))
-            learning_rate = initial_learning_rate
-
-            while f(*(point - learning_rate * gradient)) > f(*point) - 0.5 * learning_rate * np.linalg.norm(gradient) ** 2:
-                learning_rate *= ratio
-                if learning_rate < 1e-10:
-                    break
-
+            grad0 = np.array(grad(*point))
+            gradient = grad0 / np.linalg.norm(grad0)
+            learning_rate = initial_learning_rate / min(max_ratio,  i + 1)
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
 
-            if np.linalg.norm(tmp - point) < eps:
+            if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
                 break
+            prev = point
             point = tmp
 
         return point, i + 1, np.array(trajectory)
@@ -100,14 +98,16 @@ class GradientDescent:
         """
         i = 0
         trajectory = [point.copy()]
+        prev: np.ndarray = -1 * point
         for i in range(iters):
             grad0 = np.array(grad(*point))
             gradient = grad0 / np.linalg.norm(grad0)
             learning_rate = self._golden_ratio_search(lambda a: f(*(point - a * gradient)), 0, 1)
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - point) < eps:
+            if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
                 break
+            prev = point
             point = tmp
         return point, i + 1, np.array(trajectory)
 
@@ -147,14 +147,16 @@ class GradientDescent:
         """
         i = 0
         trajectory = [point.copy()]
+        prev: np.ndarray = -1 * point
         for i in range(iters):
             grad0 = np.array(grad(*point))
             gradient = grad0 / np.linalg.norm(grad0)
             learning_rate = self._dichotomy_search(lambda a: f(*(point - a * gradient)), 0, 1)
             tmp = point - learning_rate * gradient
             trajectory.append(tmp.copy())
-            if np.linalg.norm(tmp - point) < eps:
+            if np.linalg.norm(tmp - point) < eps or self._arrays_equals(tmp, prev):
                 break
+            prev = point
             point = tmp
         return point, i + 1, np.array(trajectory)
 
@@ -181,39 +183,18 @@ class GradientDescent:
                 b = right
 
         return (a + b) / 2
+    
+    def _arrays_equals(self, a: np.ndarray, b: np.ndarray) -> bool:
+        if a.size != b.size:
+            return False
+        for i in range(a.size):
+            if a[i] != b[i]:
+                return False
+        return True
 
-    def _adaptive(self, grad: tp.Any, point: np.ndarray, learning_rate: float, iters: int = 1000, eps: float = 1e-6) -> tuple[
-        np.ndarray, int, np.ndarray]:
-        """
-        Градиентный спуск с адаптивным шагом.
-        :param grad: градиент
-        :param point: начальная точка
-        :param learning_rate: начальный шаг
-        :param iters: максимальное число итераций
-        :param eps: точность
-        :return: точка минимума и число итераций
-        """
-        i = 0
-        trajectory = [point.copy()]
-        prev_step = 0
-        for i in range(iters):
-            grad0 = np.array(grad(*point))
-            gradient = grad0 / np.linalg.norm(grad0)
+    import numpy as np
 
-            step = learning_rate / (1 + prev_step)
-            prev_step = np.linalg.norm(gradient)
-
-            tmp = point - step * gradient
-            trajectory.append(tmp.copy())
-
-            if np.linalg.norm(tmp - point) < eps:
-                break
-            point = tmp
-        return point, i + 1, np.array(trajectory)
-
-
-
-    def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5, ratio: float = 1.0, iters: int = 50,
+    def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5, max_ratio: int = 20, iters: int = 50,
                  eps: float = 1e-6) -> \
             tuple[np.ndarray, int, np.ndarray]:
         """
@@ -222,7 +203,7 @@ class GradientDescent:
         :param variables: переменные
         :param starting_point: начальная точка
         :param learning_rate: начальный шаг
-        :param ratio: коэффициент дробления
+        :param max_ratio: максимальное дробление
         :param iters: максимальное число итераций
         :param eps: точность
         :return:
@@ -235,13 +216,11 @@ class GradientDescent:
         if self.mode == self.Method.CONSTANT:
             return self._constant(grad, starting_point, learning_rate, iters, eps)
         elif self.mode == self.Method.DESCENDING:
-            return self._descending(f_lambdified, grad, starting_point, learning_rate, ratio, iters, eps)
+            return self._descending(grad, starting_point, learning_rate, max_ratio, iters, eps)
         elif self.mode == self.Method.GOLDEN_RATIO:
             return self._golden_ratio(f_lambdified, grad, starting_point, iters, eps)
         elif self.mode == self.Method.DICHOTOMY:
             return self._dichotomy(f_lambdified, grad, starting_point, iters, eps)
-        elif self.mode == self.Method.ADAPTIVE:
-            return self._adaptive(grad, starting_point, learning_rate, iters, eps)
         else:
             raise NotImplementedError
 
@@ -284,11 +263,11 @@ if __name__ == '__main__':
     ylim = (-10, 10)
 
     plot_3d(sp.lambdify([x, y], f, 'numpy'), trajectories, labels, [x, y], xlim, ylim)
-    #
-    # g = x ** 2 + x / 3 - 5
-    # animate([x], g, 'constant', constant)
-    # animate([x], g, 'descending', descending)
-    # animate([x], g, 'golden ration', optimal)
-    # animate([x], g, 'dichotomy', dichotomy)
+
+    g = x ** 2 + x / 3 - 5
+    animate([x], g, 'constant', constant)
+    animate([x], g, 'descending', descending)
+    animate([x], g, 'golden ration', optimal)
+    animate([x], g, 'dichotomy', dichotomy)
 
 
