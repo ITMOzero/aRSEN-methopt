@@ -269,5 +269,3 @@ if __name__ == '__main__':
     animate([x], g, 'descending', descending)
     animate([x], g, 'golden ration', optimal)
     animate([x], g, 'dichotomy', dichotomy)
-
-
