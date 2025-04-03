@@ -31,8 +31,13 @@ def select_function(f_type):
 
     elif f_type == 'scipy_f1':
 
+        # Функция для анализа scipy: f(x, y) = x^3 + 2 * x^2 + 3 * x - 10
+        return x ** 3 + 2 * x ** 2 + 3 * x - 10, [x], [10]
+
+    elif f_type == 'scipy_f2':
+
         # Функция для анализа scipy: f(x, y) = f = y ^ 2 + x ^ 2 / 3
-        return  y ** 2 + x ** 2 / 3, [x, y], [10, 10]
+        return y ** 2 + x ** 2 / 3 + 5, [x, y], [10, 10]
 
     else:
         raise ValueError(f"Unknown function type: {f_type}")
