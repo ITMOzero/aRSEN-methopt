@@ -31,8 +31,8 @@ def select_function(f_type):
 
     elif f_type == 'scipy_f1':
 
-        # Функция для анализа scipy: f(x, y) = x^3 + 2 * x^2 + 3 * x - 10
-        return x ** 3 + 2 * x ** 2 + 3 * x - 10, [x], [10]
+        # Функция для анализа scipy: f(x, y) = x^4 + 2 * x^2 + 3 * x - 10
+        return x ** 4 + 2 * x ** 2 + 3 * x - 10, [x], [10]
 
     elif f_type == 'scipy_f2':
 
