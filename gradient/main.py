@@ -1,10 +1,7 @@
 import typing as tp
 from enum import Enum
 
-import numpy as np
-
 from functions import *
-from graphics import animate_2d
 from graphics import *
 from scipy.optimize import *
 
