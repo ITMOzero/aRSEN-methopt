@@ -196,7 +196,7 @@ class GradientDescent:
                 elif self.mode == self.Method.DICHOTOMY:
                     tmp = self._dichotomy(f_lambdified, grad, point, eps)
                 elif self.mode == self.Method.ADAPTIVE:
-                    tmp = self._dichotomy(f_lambdified, grad, point, eps)
+                    tmp = self._adaptive(grad, point, learning_rate)
                 else:
                     raise NotImplementedError
 
