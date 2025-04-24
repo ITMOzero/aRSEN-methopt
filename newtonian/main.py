@@ -2,10 +2,10 @@ import numpy as np
 from autograd import grad, hessian
 
 from newton_method import newton_method
+from graphics import *
 from scipy_method import scipy_method
 from quasi_newton_method import dfp_method
 
-from graphics import plot_function
 from functions import select_function
 
 # TODO сделать доп задания 1 и 2
@@ -76,6 +76,6 @@ if __name__ == '__main__':
     if finite_vals:
         b = max(abs(max(finite_vals)), abs(min(finite_vals)))
         for k, v in paths.items():
-            plot_function(func, {k: v}, bounds=(-b, b))
+            animate(func, {k: v}, bounds=(-b, b))
     else:
         print("incorrect values")
