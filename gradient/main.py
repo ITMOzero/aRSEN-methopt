@@ -259,7 +259,7 @@ def animate(f, variables, starting_point, methods):
 
         print(f'result: {res}, in {iterations} steps')
         print('close plot window to continue')
-        animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, variables, xlim)
+        animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, xlim)
 
 
 

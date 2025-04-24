@@ -52,7 +52,7 @@ def plot_2d(f, trajectories, labels, variables, xlim):
         plt.show()
 
 
-def animate_2d(f, trajectory, variables, xlim):
+def animate_2d(f, trajectory, xlim):
     x_plt = np.linspace(xlim[0], xlim[1], 50)
     y_plt = f(x_plt)
 
