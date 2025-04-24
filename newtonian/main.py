@@ -1,9 +1,9 @@
 import numpy as np
 from autograd import grad, hessian
 
-from Newton_method import newton_method
-from SciPy_method import scipy_method
-from Quasi_Newton_method import dfp_method
+from newton_method import newton_method
+from scipy_method import scipy_method
+from quasi_newton_method import dfp_method
 
 from graphics import plot_function
 from functions import select_function
