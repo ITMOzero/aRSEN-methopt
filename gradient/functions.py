@@ -24,7 +24,7 @@ def select_function(f_type):
         # Функция f2: f(x) = 3 * x^4 - 3 * x^3 - x^2 - x
         return 3 * x ** 4 - 3 * x ** 3 - x ** 2 - x, [x], [10]
 
-    elif f_type == 'f_himmelblau':
+    elif f_type == 'f_Himmelblau':
 
         # Функция Химмельблау: f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2
         return (x ** 2 + y - 11) ** 2 + (x + y ** 2 - 7) ** 2, [x, y], [10, 10]
@@ -43,6 +43,11 @@ def select_function(f_type):
 
         # Функция для анимации: f(x) = f = ч ^ 2 + x / 3 - 5
         return  x ** 2 + x / 3 - 5, [x], [-10]
+
+    elif f_type == 'f_Rosenbrock':
+
+        # Функция Розенброка
+        return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2, [x, y], [10, 10]
 
     else:
         raise ValueError(f"Unknown function type: {f_type}")
