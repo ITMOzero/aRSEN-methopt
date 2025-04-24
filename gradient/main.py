@@ -259,7 +259,9 @@ def animate(f, variables, starting_point, methods):
 
         print(f'result: {res}, in {iterations} steps')
         print('close plot window to continue')
-        animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, xlim)
+        f_lambdified = sp.lambdify([x], f, 'numpy')
+        f_lambdified_with_noise = constant.add_noise(f_lambdified, noise_level=0.1)
+        animate_2d(f_lambdified, trajectory, xlim)
 
 
 
@@ -301,7 +303,10 @@ if __name__ == '__main__':
     xlim = (-10, 10)
     ylim = (-10, 10)
 
-    plot_3d(sp.lambdify(variables, f, 'numpy'), trajectories, labels, variables, xlim, ylim)
+    f_lambdified = sp.lambdify(variables, f, 'numpy')
+    f_lambdified_with_noise = constant.add_noise(f_lambdified, noise_level=0.1)
+
+    plot_3d(f_lambdified_with_noise, trajectories, labels, variables, xlim, ylim)
 
     f, variables, starting_point = select_function('animation_f')
     animate(f, variables, starting_point, methods)
