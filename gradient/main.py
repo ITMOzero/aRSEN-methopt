@@ -156,7 +156,15 @@ class GradientDescent:
                 return False
         return True
 
-    import numpy as np
+    def add_noise(self, f_lambdified, noise_level: float):
+        """
+        Добавляет случайный шум к вычислению функции.
+        :param f_lambdified: лямбда-функция, которая вычисляет значение функции
+        :param noise_level: стандартное отклонение шума, который будет добавлен
+        :return: новая лямбда-функция, которая возвращает значение функции с шумом
+        """
+        return lambda *args: np.array(f_lambdified(*args)) + np.random.normal(0, noise_level,
+                                                                              size=np.shape(f_lambdified(*args)))
 
     def find_min(self, f: tp.Any, variables: tp.Any, starting_point: np.ndarray, learning_rate: float = 0.5,
                  max_ratio: int = 20, iters: int = 50,
@@ -176,7 +184,11 @@ class GradientDescent:
 
         point = np.array(starting_point, dtype=float)
         grad = self._get_gradient(f, variables)
+        grad_with_noise = self.add_noise(grad, noise_level=0.1)
+
         f_lambdified = sp.lambdify(variables, f, 'numpy')
+        f_lambdified_with_noise = self.add_noise(f_lambdified, noise_level=0.1)
+
 
         if (self.mode == self.Method.BFGS or self.mode == self.Method.SG):
             return self.scipy(f_lambdified, grad, point)
@@ -232,20 +244,25 @@ class GradientDescent:
 
 
 
-def animate(variables, f, label, method):
+
+def animate(f, variables, starting_point, methods):
     """
     Анимация траектории градиентного спуска для заданной функции.
     :param variables: переменные функции
     :param f: функция для минимизации
-    :param label: метка для визуализации
-    :param method: метод градиентного спуска
+    :methods: массив методов
     """
 
-    print(f'==== {label} ====')
-    res, iterations, trajectory = method.find_min(f, variables, np.array([-10.0]), learning_rate=0.2)
-    print(f'result: {res}, in {iterations} steps')
-    print('close plot window to continue')
-    animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, variables, xlim)
+    for method_name, method in methods:
+        print(f'==== {method_name} ====')
+        res, iterations, trajectory = method.find_min(f, variables, starting_point, learning_rate=0.2)
+
+        print(f'result: {res}, in {iterations} steps')
+        print('close plot window to continue')
+        animate_2d(sp.lambdify([x], f, 'numpy'), trajectory, variables, xlim)
+
+
+
 
 
 if __name__ == '__main__':
@@ -262,7 +279,7 @@ if __name__ == '__main__':
 
     trajectories = []
     labels = []
-    for method_name, method in [
+    methods = [
         ('Constant learning_rate', constant),
         ('Descending learning_rate', descending),
         ('Optimal learning_rate (gold ratio)', optimal),
@@ -270,7 +287,9 @@ if __name__ == '__main__':
         ('Adaptive learning_rate', adaptive),
         ('scipy bfgs', bfgs),
         ('scipy sg', sg)
-    ]:
+    ]
+
+    for method_name, method in methods:
         print(f'{method_name}:')
         point, step, trajectory = method.find_min(f, variables, starting_point)
         labels.append(method_name.replace(' ', '_'))
@@ -284,11 +303,9 @@ if __name__ == '__main__':
 
     plot_3d(sp.lambdify(variables, f, 'numpy'), trajectories, labels, variables, xlim, ylim)
 
-    g = x ** 2 + x / 3 - 5
-    animate([x], g, 'constant', constant)
-    animate([x], g, 'descending', descending)
-    animate([x], g, 'golden ration', optimal)
-    animate([x], g, 'dichotomy', dichotomy)
+    f, variables, starting_point = select_function('animation_f')
+    animate(f, variables, starting_point, methods)
+
 
 
 

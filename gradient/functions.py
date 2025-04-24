@@ -39,6 +39,11 @@ def select_function(f_type):
         # Функция для анализа scipy: f(x, y) = f = y ^ 2 + x ^ 2 / 3
         return y ** 2 + x ** 2 / 3 + 5, [x, y], [10, 10]
 
+    elif f_type == 'animation_f':
+
+        # Функция для анимации: f(x) = f = ч ^ 2 + x / 3 - 5
+        return  x ** 2 + x / 3 - 5, [x], [-10]
+
     else:
         raise ValueError(f"Unknown function type: {f_type}")
 
