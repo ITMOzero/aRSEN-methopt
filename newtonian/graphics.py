@@ -41,13 +41,13 @@ def animate(f, path_dict, bounds=(-10, 10), num_points=400, interval=0.1, tangen
     tangent_lines = {}
 
     for label, path in path_dict.items():
+        scatters[label] = ax.scatter([], [], s=80, zorder=4, label=label)
         past_scatters[label] = ax.scatter([], [], s=20, alpha=0.5, zorder=3)
         tangent_lines[label] = ax.plot([], [], '--', alpha=0.7, linewidth=1, zorder=2)[0]
 
     ax.legend()
 
     input("Нажмите Enter, чтобы начать анимацию...")
-
     max_length = max(len(path) for path in path_dict.values())
     for i in range(max_length):
         for label, path in path_dict.items():
