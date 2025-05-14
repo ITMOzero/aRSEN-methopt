@@ -4,6 +4,7 @@ from enum import Enum
 from functions import *
 from graphics import *
 from scipy.optimize import *
+import optuna
 
 class GradientDescent:
     class Method(Enum):
@@ -242,6 +243,30 @@ class GradientDescent:
         return result[0], len(trajectory), np.array(trajectory)
 
 
+    def _optimize_with_optuna(self, f: tp.Any, variables: tp.Any) -> tuple[np.ndarray, int, np.ndarray]:
+        def objective(trial):
+            learning_rate = trial.suggest_float('learning_rate', 1e-6, 1.0)
+            initial_x = trial.suggest_float('initial_x', -10, 10)
+            initial_y = trial.suggest_float('initial_y', -10, 10)
+            initial_point = np.array([initial_x, initial_y])
+
+            point, iterations, trajectory = self.find_min(f, variables, initial_point, learning_rate)
+            return iterations
+
+        study = optuna.create_study(direction='minimize')
+        study.optimize(objective, n_trials=100)
+
+        optimal_learning_rate = study.best_params['learning_rate']
+        optimal_initial_point = np.array([study.best_params['initial_x'], study.best_params['initial_y']])
+
+        print(f"Optimal learning rate: {optimal_learning_rate}")
+        print(f"Optimal initial point: {optimal_initial_point}")
+
+        point, iterations, trajectory = self.find_min(f, variables, optimal_initial_point, optimal_learning_rate)
+
+        return point, iterations, np.array(trajectory)
+
+
 
 
 
@@ -291,14 +316,22 @@ if __name__ == '__main__':
         ('scipy sg', sg)
     ]
 
+    # for method_name, method in methods:
+    #     print(f'{method_name}:')
+    #     point, step, trajectory = method.find_min(f, variables, starting_point)
+    #     labels.append(method_name.replace(' ', '_'))
+    #     trajectories.append(trajectory)
+    #     point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
+    #     print(point_formatted, step, "\n")
+
+
     for method_name, method in methods:
         print(f'{method_name}:')
-        point, step, trajectory = method.find_min(f, variables, starting_point)
+        point, step, trajectory = method._optimize_with_optuna(f, variables)
         labels.append(method_name.replace(' ', '_'))
         trajectories.append(trajectory)
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
-
 
     xlim = (-10, 10)
     ylim = (-10, 10)
@@ -308,8 +341,8 @@ if __name__ == '__main__':
 
     plot_3d(f_lambdified_with_noise, trajectories, labels, variables, xlim, ylim)
 
-    f, variables, starting_point = select_function('animation_f')
-    animate(f, variables, starting_point, methods)
+    # f, variables, starting_point = select_function('animation_f')
+    # animate(f, variables, starting_point, methods)
 
 
 
