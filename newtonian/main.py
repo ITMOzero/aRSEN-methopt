@@ -2,7 +2,9 @@ from autograd import grad, hessian
 
 from newton_method import newton_method
 from graphics import *
-from newtonian.optimize_with_optuna import newton_optimize_with_optuna, scipy_optimize_with_optuna
+from newtonian.optimize_with_optuna import newton_optimize_with_optuna, scipy_optimize_with_optuna, \
+    dfp_optimize_with_optuna
+from newtonian.quasi_newton_method import dfp_method
 from scipy_method import scipy_method
 from functions import select_function
 
@@ -76,6 +78,11 @@ if __name__ == '__main__':
     f.reset(); grad.reset(); hess.reset()
     x_bfgs, it_bfgs, path_bfgs = scipy_optimize_with_optuna(f, grad, hess=None, method='BFGS', options={'gtol': 1e-6, 'maxiter': 100})
     print_info("BFGS", x_ncg, it_ncg, f.n_calls, grad.n_calls, hess.n_calls)
+
+    # DFP method optimized with optuna
+    # f.reset(); grad.reset(); hess.reset()
+    # x_dfp, it_dfp, path_dfp = dfp_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000, max_iter_for_backtracking=100)
+    # print_info("DFP", x_ncg, it_ncg, f.n_calls, grad.n_calls, hess.n_calls)
 
     # Визуализация всех
     paths = {
