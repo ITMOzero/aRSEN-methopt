@@ -95,9 +95,10 @@ if __name__ == '__main__':
         'Optimized Newton-CG': path_ncg_optimized,
         # Optimized 'DFP': path_dfp_optimized
     }
-
+    for k, v in paths.items():
+        plot_function(func, {k: v})
     # all_points = path_newton + path_bfgs + path_ncg + path_dfp
-    all_points = path_newton + path_bfgs + path_ncg
+    all_points = path_newton + path_bfgs + path_ncg + path_newton_optimized + path_newton_optimized + path_ncg_optimized
     finite_vals = [x for x in all_points if np.isfinite(x)]
     if finite_vals:
         b = max(abs(max(finite_vals)), abs(min(finite_vals)))
