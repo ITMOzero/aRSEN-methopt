@@ -1,10 +1,10 @@
 import optuna
 
-import numpy as np
-from newtonian.newton_method import newton_method
-from newtonian.scipy_method import scipy_method
-from newtonian.quasi_newton_method import bfgs_modified
+from newton_method import newton_method
+from quasi_newton_method import dfp_method
+from scipy_method import scipy_method
 
+optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 def newton_optimize_with_optuna(f, grad, hess, eps: float=1e-6, max_iter: int=1000, max_iter_for_backtracking: int=100):
     def objective(trial):

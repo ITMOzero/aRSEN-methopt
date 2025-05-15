@@ -253,8 +253,8 @@ class GradientDescent:
             point, iterations, trajectory = self.find_min(f, variables, initial_point, learning_rate)
             return iterations
 
-        study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=100)
+        study = optuna.create_study()
+        study.optimize(objective, n_trials=2000)
 
         optimal_learning_rate = study.best_params['learning_rate']
         optimal_initial_point = np.array([study.best_params['initial_x'], study.best_params['initial_y']])
@@ -307,28 +307,22 @@ if __name__ == '__main__':
     trajectories = []
     labels = []
     methods = [
-        ('Constant learning_rate', constant),
-        ('Descending learning_rate', descending),
-        ('Optimal learning_rate (gold ratio)', optimal),
-        ('Optimal learning_rate (dichotomy)', dichotomy),
-        ('Adaptive learning_rate', adaptive),
-        ('scipy bfgs', bfgs),
-        ('scipy sg', sg)
+        ('Optimal learning_rate (dichotomy)', dichotomy)
     ]
-
-    # for method_name, method in methods:
-    #     print(f'{method_name}:')
-    #     point, step, trajectory = method.find_min(f, variables, starting_point)
-    #     labels.append(method_name.replace(' ', '_'))
-    #     trajectories.append(trajectory)
-    #     point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
-    #     print(point_formatted, step, "\n")
-
 
     for method_name, method in methods:
         print(f'{method_name}:')
-        point, step, trajectory = method._optimize_with_optuna(f, variables)
+        point, step, trajectory = method.find_min(f, variables, starting_point)
         labels.append(method_name.replace(' ', '_'))
+        trajectories.append(trajectory)
+        point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
+        print(point_formatted, step, "\n")
+
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    for method_name, method in methods:
+        print(f'{method_name}:')
+        point, step, trajectory = method._optimize_with_optuna(f, variables)
+        labels.append("optuna" + method_name.replace(' ', '_'))
         trajectories.append(trajectory)
         point_formatted = [{str(var): f'{p:.16f}'} for var, p in zip([x, y, z], point)]
         print(point_formatted, step, "\n")
@@ -339,7 +333,8 @@ if __name__ == '__main__':
     f_lambdified = sp.lambdify(variables, f, 'numpy')
     f_lambdified_with_noise = constant.add_noise(f_lambdified, noise_level=0.1)
 
-    plot_3d(f_lambdified_with_noise, trajectories, labels, variables, xlim, ylim)
+
+    plot_3d(f_lambdified, trajectories, labels, variables, xlim, ylim)
 
     # f, variables, starting_point = select_function('animation_f')
     # animate(f, variables, starting_point, methods)

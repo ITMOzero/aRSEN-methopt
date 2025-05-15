@@ -36,17 +36,17 @@ def select_function(f_type):
 
     elif f_type == 'scipy_f2':
 
-        # Функция для анализа scipy: f(x, y) = f = y ^ 2 + x ^ 2 / 3
+        # Функция для анализа scipy: f(x, y) = y ^ 2 + x ^ 2 / 3
         return y ** 2 + x ** 2 / 3 + 5, [x, y], [10, 10]
 
     elif f_type == 'animation_f':
 
-        # Функция для анимации: f(x) = f = ч ^ 2 + x / 3 - 5
+        # Функция для анимации: f(x) = x ^ 2 + x / 3 - 5
         return  x ** 2 + x / 3 - 5, [x], [-10]
 
     elif f_type == 'f_Rosenbrock':
 
-        # Функция Розенброка
+        # Функция Розенброка: f(x, y) = (1 - x) ^ 2 + 100 * (y - x ^ 2)
         return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2, [x, y], [10, 10]
 
     else:
