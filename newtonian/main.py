@@ -9,6 +9,7 @@ from scipy_method import scipy_method
 from functions import select_function
 
 # TODO сделать доп задания 1 и 2
+# TODO gif for f1-3 functions 
 def wrap_count(func):
     class Wrapper:
         def __init__(self, f):
