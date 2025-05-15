@@ -45,7 +45,7 @@ if __name__ == '__main__':
     grad = wrap_count(grad_f)
     hess = wrap_count(hess_f)
 
-    params = {'alpha_0': 1.0, 'q': 0.5, 'c': 0.5, 'max_iter': 100}
+    params = {'alpha_0': 10.0, 'q': 0.5, 'c': 0.5, 'max_iter': 100}
 
     # Newton method
     f.reset();
