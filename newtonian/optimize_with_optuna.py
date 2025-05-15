@@ -1,7 +1,8 @@
 import optuna
 
+import numpy as np
 from newton_method import newton_method
-from quasi_newton_method import dfp_method
+from quasi_newton_method import bfgs_modified
 from scipy_method import scipy_method
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -46,15 +47,11 @@ def scipy_optimize_with_optuna(f, grad, hess, method, options: dict=None):
     return x_newton, it_newton, path_newton
 
 
-def bfgs_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000, max_line_search_iter=100):
+def bfgs_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000):
     def objective(trial):
-        alpha_0 = trial.suggest_float('alpha_0', 0.1, 2.0)
-        c1 = trial.suggest_float('c1', 1e-6, 1e-3)
-        c2 = trial.suggest_float('c2', 0.1, 0.9)
         x_0 = trial.suggest_float('initial_x', -10, 10)
 
-        x_opt, history = bfgs_modified(f, grad, np.array([x_0]),
-                                       max_iter=max_iter, tol=eps)
+        x_opt, history = bfgs_modified(f, grad, np.array([x_0]), max_iter=max_iter, tol=eps)
         return len(history)
 
     study = optuna.create_study(direction='minimize')

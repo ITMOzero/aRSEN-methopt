@@ -3,8 +3,8 @@ from autograd import grad, hessian
 from newton_method import newton_method
 from graphics import *
 from optimize_with_optuna import newton_optimize_with_optuna, scipy_optimize_with_optuna, \
-    dfp_optimize_with_optuna
-from quasi_newton_method import dfp_method
+    bfgs_optimize_with_optuna
+from quasi_newton_method import bfgs_modified
 from scipy_method import scipy_method
 from functions import select_function
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # print_info("DFP", x_dfp, it_dfp, f.n_calls, grad.n_calls, hess.n_calls)
 
     f.reset(); grad.reset(); hess.reset()
-    x_bfgs_optuna_x0, it_bfgs_optuna_trials, path_bfgs_optuna_path = bfgs_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000, max_line_search_iter=100)
+    x_bfgs_optuna_x0, it_bfgs_optuna_trials, path_bfgs_optuna = bfgs_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000)
 
     # Newton method optimized with optuna
     f.reset(); grad.reset(); hess.reset()
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         'Newton': path_newton,
         'BFGS': path_bfgs,
         'Newton-CG': path_ncg,
-        # 'DFP': path_dfp
+        'Modified BFGS': path_bfgs_optuna,
         'Optimized Newton': path_newton_optimized,
         'Optimized BFGS': path_bfgs_optimized,
         'Optimized Newton-CG': path_ncg_optimized,
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     for k, v in paths.items():
         plot_function(func, {k: v})
     # all_points = path_newton + path_bfgs + path_ncg + path_dfp
-    all_points = path_newton + path_bfgs + path_ncg + path_newton_optimized + path_newton_optimized + path_ncg_optimized
+    all_points = path_newton + path_bfgs + path_ncg + path_newton_optimized + path_newton_optimized + path_ncg_optimized + path_bfgs_optuna
     finite_vals = [x for x in all_points if np.isfinite(x)]
     if finite_vals:
         b = max(abs(max(finite_vals)), abs(min(finite_vals)))
