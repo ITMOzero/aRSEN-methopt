@@ -3,8 +3,8 @@ from autograd import grad, hessian
 from newton_method import newton_method
 from graphics import *
 from newtonian.optimize_with_optuna import newton_optimize_with_optuna, scipy_optimize_with_optuna, \
-    dfp_optimize_with_optuna
-from newtonian.quasi_newton_method import dfp_method
+    bfgs_optimize_with_optuna
+from newtonian.quasi_newton_method import bfgs_modified
 from scipy_method import scipy_method
 from functions import select_function
 
@@ -64,6 +64,9 @@ if __name__ == '__main__':
     # x_dfp, it_dfp, path_dfp = dfp_method(f, grad, x_0=x_0, eps=1e-6, max_iter=1000, params=params)
     # print_info("DFP", x_ncg, it_ncg, f.n_calls, grad.n_calls, hess.n_calls)
 
+    f.reset(); grad.reset(); hess.reset()
+    x_bfgs_optuna_x0, it_bfgs_optuna_trials, path_bfgs_optuna_path = bfgs_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000, max_line_search_iter=100)
+
     # Newton method optimized with optuna
     f.reset(); grad.reset(); hess.reset()
     x_newton, it_newton, a = newton_optimize_with_optuna(f, grad, hess, eps=1e-6, max_iter=1000, max_iter_for_backtracking=100)
@@ -84,16 +87,21 @@ if __name__ == '__main__':
     # x_dfp, it_dfp, path_dfp = dfp_optimize_with_optuna(f, grad, eps=1e-6, max_iter=1000, max_iter_for_backtracking=100)
     # print_info("DFP", x_ncg, it_ncg, f.n_calls, grad.n_calls, hess.n_calls)
 
+    f.reset(); grad.reset()
+    x_bfgs_mod_x0 = np.array([x_0])
+    x_bfgs_mod_result, path_bfgs_mod = bfgs_modified(f,grad,x_bfgs_mod_x0,max_iter=1000,tol=1e-6)
+    print_info("BFGS (modified)", x_bfgs_mod_result[0], len(path_bfgs_mod), f.n_calls + grad.n_calls)
+
     # Визуализация всех
     paths = {
         'Newton': path_newton,
         'BFGS': path_bfgs,
         'Newton-CG': path_ncg,
-        # 'DFP': path_dfp
+         'BFGS_modified': path_bfgs_mod
     }
 
     # all_points = path_newton + path_bfgs + path_ncg + path_dfp
-    all_points = path_newton + path_bfgs + path_ncg
+    all_points = path_newton + path_bfgs + path_ncg + path_bfgs_mod
     finite_vals = [x for x in all_points if np.isfinite(x)]
     if finite_vals:
         b = max(abs(max(finite_vals)), abs(min(finite_vals)))
