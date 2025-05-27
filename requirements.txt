@@ -4,3 +4,7 @@ matplotlib~=3.10.1
 scipy~=1.15.2
 autograd~=1.7.0
 optuna~=4.3.0
+scikit-learn~=1.6.1
+torch~=2.7.0
+psutil~=7.0.0
+memory-profiler~=0.61.0
