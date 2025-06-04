@@ -117,21 +117,50 @@ def artificial_bee_colony(f, initial_solution, colony_size=3, iterations=100, li
 
 if __name__ == "__main__":
 
-    f, variables, initial_solution = select_function('f1')
+    f, variables, initial_solution = select_function('scipy_f2')
 
     f_lambdified = sp.lambdify(variables, f, 'numpy')
 
 
 
     best_solution, best_value, trajectory = artificial_bee_colony(f_lambdified, np.array(initial_solution))
-    path_dict = {'Population': trajectory}
-    animate_bee_colony(f_lambdified, path_dict)
+
+    if len(initial_solution) == 1:
+        path_dict = {'Optimization Path': trajectory}
+        animate_bee_colony(f_lambdified, path_dict)
+    elif len(initial_solution) == 2:
+        animate_bee_3d(
+            f_lambdified,
+            trajectory,
+            variables,
+            interval=0.05
+        )
+    else:
+        print("Can't animate it")
+
+
+
 
 
     best_solution, best_value, trajectory = simulated_annealing(f_lambdified, np.array(initial_solution))
     print(f"Best solution: {best_solution}, Value: {best_value}, iterations: {trajectory.size}")
-    path_dict = {'Optimization Path': trajectory}
-    animate(f_lambdified, path_dict)
+
+    if len(initial_solution) == 1:
+        path_dict = {'Optimization Path': trajectory}
+        animate(f_lambdified, path_dict)
+    elif len(initial_solution) == 2:
+        animate_3d(
+            f_lambdified,
+            trajectory,
+            variables,
+            interval=0.05
+        )
+    else:
+        print("Can't animate it")
+
+
+
+
 
 
 

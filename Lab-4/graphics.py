@@ -55,6 +55,94 @@ def animate(f, path_dict, num_points=400, interval=0.1):
 
 
 
+def animate_3d(f, trajectory, variables, interval=0.1):
+    """
+    Анимация для функции f(x, y) в 3D:
+    - сначала строим поверхность f на сетке (xlim × ylim),
+    - затем анимируем движение по заданной 2D-траектории (trajectory.shape = (N, 2)),
+      отображая точку и линию, соединяющую все предыдущие точки траектории.
+
+    :param f: ламбда-функция, принимающая два массива (X, Y) и возвращающая Z = f(X, Y).
+    :param trajectory: numpy-массив shape=(N, 2), где каждая строка = [x_i, y_i].
+    :param variables: список из двух имен переменных, например ['x', 'y'] (для подписи осей).
+    :param xlim: кортеж (xmin, xmax) по оси X.
+    :param ylim: кортеж (ymin, ymax) по оси Y.
+    :param interval: задержка (в секундах) между кадрами анимации.
+    """
+
+
+    var_names = [str(v) for v in variables]
+
+    xs = trajectory[:, 0]
+    ys = trajectory[:, 1]
+
+
+    dx = (xs.max() - xs.min()) * 0.1
+    dy = (ys.max() - ys.min()) * 0.1
+    xlim = (xs.min() - dx, xs.max() + dx)
+    ylim = (ys.min() - dy, ys.max() + dy)
+
+    x = np.linspace(xlim[0], xlim[1], 100)
+    y = np.linspace(ylim[0], ylim[1], 100)
+    X, Y = np.meshgrid(x, y)
+    Z = f(X, Y)
+
+
+    plt.ion()
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.6)
+
+    ax.set_xlabel(var_names[0])
+    ax.set_ylabel(var_names[1])
+    ax.set_zlabel('f({}, {})'.format(var_names[0], var_names[1]))
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+
+    line_path, = ax.plot([], [], [], 'r-', linewidth=2, label='Траектория')
+    point_curr = ax.scatter([], [], [], color='red', s=50, label='Текущая точка')
+
+    ax.legend()
+
+
+    input("Нажмите Enter, чтобы запустить 3D-анимацию...")
+
+
+    trajectory = np.array(trajectory)
+    N = trajectory.shape[0]
+
+
+    past_x = []
+    past_y = []
+    past_z = []
+
+    for i in range(N):
+        x_i, y_i = trajectory[i]
+        z_i = f(np.array([[x_i]]), np.array([[y_i]]))[0, 0] if hasattr(f, "__call__") else f(x_i, y_i)
+
+        past_x.append(x_i)
+        past_y.append(y_i)
+        past_z.append(z_i)
+
+        line_path.set_data(past_x, past_y)
+        line_path.set_3d_properties(past_z)
+
+        point_curr._offsets3d = ([x_i], [y_i], [z_i])
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(interval)
+
+    print("Анимация завершена.")
+    plt.ioff()
+    plt.show()
+
+
+
 
 def animate_bee_colony(f, path_dict, num_points=400, interval=0.1):
     """
@@ -123,3 +211,106 @@ def animate_bee_colony(f, path_dict, num_points=400, interval=0.1):
         plt.show()
     else:
         print("incorrect values")
+
+
+
+def animate_bee_3d(f, trajectory, variables, interval=0.1):
+    """
+    3D‐анимация для метода искусственной пчелиной колонии (ABC) на функции f(x,y).
+    trajectory: список длины T, где каждый элемент — массив shape=(colony_size, 2)
+                с координатами [x, y] всех пчёл на данном шаге.
+    variables: список из двух символов, например ['x', 'y'], для подписей осей.
+    interval: задержка между кадрами анимации в секундах.
+    """
+
+
+    trajectory = np.array(trajectory)
+    T, colony_size, dim = trajectory.shape
+    if dim != 2:
+        print("Ошибка: функция animate_bee_3d рассчитана только на двумерное пространство (dim=2).")
+        return
+
+
+    var_names = [str(v) for v in variables]
+
+    all_x = trajectory[:, :, 0].flatten()
+    all_y = trajectory[:, :, 1].flatten()
+
+
+    dx = (all_x.max() - all_x.min()) * 0.1
+    dy = (all_y.max() - all_y.min()) * 0.1
+    xlim = (all_x.min() - dx, all_x.max() + dx)
+    ylim = (all_y.min() - dy, all_y.max() + dy)
+
+
+    x = np.linspace(xlim[0], xlim[1], 100)
+    y = np.linspace(ylim[0], ylim[1], 100)
+    X, Y = np.meshgrid(x, y)
+    Z = f(X, Y)
+
+
+    plt.ion()
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.6)
+
+
+    ax.set_xlabel(var_names[0])
+    ax.set_ylabel(var_names[1])
+    ax.set_zlabel(f"f({var_names[0]}, {var_names[1]})")
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+
+    history_lines = []
+    current_points = []
+    colors = plt.cm.tab10(np.linspace(0, 1, colony_size))  # разные цвета для каждой пчелы
+
+    for j in range(colony_size):
+
+        line_j, = ax.plot([], [], [], color=colors[j], linewidth=2, label=f'Пчела {j+1} (траектория)')
+        history_lines.append(line_j)
+
+        point_j = ax.scatter([], [], [], color=colors[j], s=50, marker='o',
+                             label=f'Пчела {j+1} (текущая)')
+        current_points.append(point_j)
+
+    ax.legend()
+
+    input("Нажмите Enter, чтобы запустить 3D-анимацию для пчелиной колонии...")
+
+
+    past_coords = [[], [], [], [], [], [], [], [], [], []]
+
+    for t in range(T):
+        population_t = trajectory[t]
+
+        for j in range(colony_size):
+            x_j, y_j = population_t[j]
+
+            z_j = f(np.array([[x_j]]), np.array([[y_j]]))[0, 0] \
+                  if hasattr(f, "__call__") else f(x_j, y_j)
+
+            past_coords[j].append((x_j, y_j, z_j))
+
+
+            xs_line = [pt[0] for pt in past_coords[j]]
+            ys_line = [pt[1] for pt in past_coords[j]]
+            zs_line = [pt[2] for pt in past_coords[j]]
+
+
+            history_lines[j].set_data(xs_line, ys_line)
+            history_lines[j].set_3d_properties(zs_line)
+
+            current_points[j]._offsets3d = ([x_j], [y_j], [z_j])
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(interval)
+
+    print("done")
+    plt.ioff()
+    plt.show()
