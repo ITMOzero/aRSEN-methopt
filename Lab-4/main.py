@@ -114,38 +114,28 @@ def artificial_bee_colony(f, initial_solution, colony_size=3, iterations=100, li
 
     return best_solution, best_value, trajectory
 
-# Пример использования:
+
 if __name__ == "__main__":
 
     f, variables, initial_solution = select_function('f1')
 
     f_lambdified = sp.lambdify(variables, f, 'numpy')
 
-    # best_solution, best_value, trajectory = simulated_annealing(f_lambdified, np.array(initial_solution))
-    # print(f"Best solution: {best_solution}, Value: {best_value}, iterations: {trajectory.size}")
-    # path_dict = {
-    #     'Optimization Path': trajectory
-    # }
-    # finite_vals = [x for x in trajectory if np.isfinite(x)]
-    # if finite_vals:
-    #     b = max(abs(max(finite_vals)), abs(min(finite_vals)))
-    #     animate(f_lambdified, path_dict, bounds=(-b, b))
-    #
-    # else:
-    #     print("incorrect values")
-
 
 
     best_solution, best_value, trajectory = artificial_bee_colony(f_lambdified, np.array(initial_solution))
     path_dict = {'Population': trajectory}
-    finite_vals = [point for population in trajectory for point in population if np.isfinite(f_lambdified(*point))]
+    animate_bee_colony(f_lambdified, path_dict)
 
-    if finite_vals:
-        b = max(abs(max(finite_vals)), abs(min(finite_vals)))
-        animate_bee_colony(f_lambdified, path_dict, bounds=(-b, b))
 
-    else:
-        print("incorrect values")
+    best_solution, best_value, trajectory = simulated_annealing(f_lambdified, np.array(initial_solution))
+    print(f"Best solution: {best_solution}, Value: {best_value}, iterations: {trajectory.size}")
+    path_dict = {'Optimization Path': trajectory}
+    animate(f_lambdified, path_dict)
+
+
+
+
 
 
 
