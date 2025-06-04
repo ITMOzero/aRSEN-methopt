@@ -42,7 +42,7 @@ def select_function(f_type):
     elif f_type == 'animation_f':
 
         # Функция для анимации: f(x) = x ^ 2 + x / 3 - 5
-        return  x ** 2 + x / 3 - 5, [x], [-10]
+        return x ** 2 + x / 3 - 5, [x], [-10]
 
     elif f_type == 'f_Rosenbrock':
 
@@ -51,4 +51,3 @@ def select_function(f_type):
 
     else:
         raise ValueError(f"Unknown function type: {f_type}")
-
