@@ -1,29 +1,22 @@
-from sklearn import svm
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn import svm
 
-# Данные: 2 класса в 2D
 X = np.array([[1, 2], [2, 3], [3, 3], [6, 5], [7, 8], [8, 8]])
 y = np.array([1, 1, 1, -1, -1, -1])
 
-# Обучение SVM с линейным ядром
 model = svm.SVC(kernel='linear', C=1.0)
 model.fit(X, y)
 
-# Веса и смещение
-w = model.coef_[0]  # Вектор w
-b = model.intercept_[0]  # Смещение b
+w = model.coef_[0]
+b = model.intercept_[0]
 print(f"Гиперплоскость: {w[0]:.2f}x1 + {w[1]:.2f}x2 + {b:.2f} = 0")
 
-# Опорные векторы
 print("Опорные векторы:", model.support_vectors_)
-
-
 
 plt.scatter(X[:, 0], X[:, 1], c=y, cmap='autumn')
 ax = plt.gca()
 
-# Границы зазора
 xlim = ax.get_xlim()
 ylim = ax.get_ylim()
 xx = np.linspace(xlim[0], xlim[1], 30)
