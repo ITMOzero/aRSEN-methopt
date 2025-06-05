@@ -162,17 +162,14 @@ for name, opt in optimizers.items():
     stats["Epochs to Min Loss"].append(np.argmin(losses) + 1)
     stats["Time per Epoch (ms)"].append(training_time)
 
-# Создаем DataFrame
 df_results = pd.DataFrame(stats)
 
 
-# Функция для подсветки минимальных значений
 def highlight_min(s):
     is_min = s == s.min()
     return ['background-color: lightgreen' if v else '' for v in is_min]
 
 
-# Применяем стилизацию
 styled_df = df_results.style.apply(highlight_min,
                                    subset=["Final Loss", "Min Loss", "Time per Epoch (ms)"])
 
@@ -183,7 +180,6 @@ print(df_results.to_string(index=False))
 
 print("=" * 50)
 
-# График сходимости
 plt.figure(figsize=(10, 6))
 for name, losses in results.items():
     plt.plot(losses, label=name)
@@ -195,14 +191,3 @@ plt.grid(True)
 plt.savefig("loss_comparison.png")
 plt.close()
 
-
-
-# w_values = np.linspace(-5, 5, 100)
-# losses = [compute_loss(X, y, np.array([w])) for w in w_values]
-#
-# plt.plot(w_values, losses)
-# plt.xlabel("Вес w")
-# plt.ylabel("Loss L(w)")
-# plt.title("Градиентный спуск: движение к минимуму")
-# plt.savefig("1D_model.gif")
-# plt.close()
