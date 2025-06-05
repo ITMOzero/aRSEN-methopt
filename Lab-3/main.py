@@ -32,8 +32,8 @@ def sgd(X, y, epochs=100, batch_size=1, lr_schedule=None, reg=None, alpha=0.01, 
             grad_b = np.mean(error)
 
             match reg:
-                case 'l1': grad_w += alpha * weights
-                case 'l2': grad_w += alpha * np.sign(weights)
+                case 'l1': grad_w += alpha * np.sign(weights)
+                case 'l2': grad_w += alpha * weights
                 case 'elastic': grad_w += alpha * (0.5 * weights + 0.5 * np.sign(weights))
 
             weights -= lr_epoch * grad_w
@@ -49,7 +49,7 @@ def sgd(X, y, epochs=100, batch_size=1, lr_schedule=None, reg=None, alpha=0.01, 
     return weights, bias, history
 
 
-def torch_train(X_train, y_train, X_test, y_test, optimizer_type='SGD', epochs=100, lr=0.01, weight_decay=0.0, momentum=0.0, nesterov=False):
+def torch_train(X_train, y_train, X_test, y_test, optimizer_type='SGD', epochs=100, lr=0.01, weight_decay=0.0, momentum=0.1, nesterov=False):
     X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train.reshape(-1, 1), dtype=torch.float32)
     X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
@@ -57,16 +57,11 @@ def torch_train(X_train, y_train, X_test, y_test, optimizer_type='SGD', epochs=1
     model = nn.Linear(X_train.shape[1], 1)
     criterion = nn.MSELoss()
 
-    if optimizer_type == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum, nesterov=nesterov)
-    elif optimizer_type == 'Adam':
-        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    elif optimizer_type == 'RMSprop':
-        optimizer = optim.RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay)
-    elif optimizer_type == 'AdaGrad':
-        optimizer = optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
-    else:
-        raise ValueError(f"Unknown optimizer: {optimizer_type}")
+    match optimizer_type:
+        case 'SGD': optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum, nesterov=nesterov)
+        case 'Adam': optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        case 'RMSprop': optimizer = optim.RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay)
+        case 'AdaGrad': optimizer = optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     losses = []
     start_time = time.time()
@@ -96,16 +91,16 @@ def torch_train(X_train, y_train, X_test, y_test, optimizer_type='SGD', epochs=1
 
 
 def run_experiment(batch_sizes, regularizations, learning_rate_schedule, epochs=100):
-    X, y = make_regression(n_samples=2000, n_features=20, noise=10, random_state=42)
+    X, y = make_regression(n_samples=2500, n_features=20, noise=10, random_state=42)
     X = (X - X.mean(axis=0)) / X.std(axis=0)
     y = (y - y.mean()) / y.std()
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     results = []
 
-    for batch_size in batch_sizes:
-        for reg in regularizations:
-            for learning_rate in learning_rate_schedule.keys():
+    for reg in regularizations:
+        for learning_rate in learning_rate_schedule.keys():
+            for batch_size in batch_sizes:
                 mem_before = psutil.Process().memory_info().rss / (1024 * 1024)
                 start_time = time.time()
 
@@ -180,11 +175,11 @@ def plot_results(results):
 
 def main():
     batch_sizes = [1, 32, 128, 1000, 2000]
-    regularizations = [None, 'l1', 'l2', 'elastic']
+    regularizations = ['l1', 'l2', 'elastic']
     learning_rate_schedule = {
         'standard': lambda *args: 1e-3,
-        'step_decay': lambda k: 0.01 * (0.9 ** (k // 100)),
-        'linear_decay': lambda k: max(1e-3, 1e-1 - k * 1e-3)
+        'step_decay': lambda x: 0.01 * (0.9 ** (x // 100)),
+        'linear_decay': lambda x: max(1e-3, 1e-1 - x * 1e-3)
     }
     results = run_experiment(batch_sizes, regularizations, learning_rate_schedule)
     # plot_results(results)
